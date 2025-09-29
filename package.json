@@ -1,0 +1,61 @@
+{
+    "name": "create-devanthos-app",
+    "version": "1.0.0",
+    "type": "module",
+    "description": "CLI oficial para crear proyectos con las plantillas modernas Devanthos (Astro, Next.js y más).",
+    "homepage": "https://devanthos.com",
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/devanthos/create-devanthos-app.git"
+    },
+    "bugs": {
+        "url": "https://github.com/devanthos/create-devanthos-app/issues"
+    },
+    "bin": {
+        "create-devanthos-app": "./index.js"
+    },
+    "files": [
+        "index.js",
+        "utils/",
+        "README.md"
+    ],
+    "keywords": [
+        "cli",
+        "devanthos",
+        "create-app",
+        "astro",
+        "nextjs",
+        "template",
+        "starter",
+        "boilerplate",
+        "scaffold",
+        "generator",
+        "frontend",
+        "web-development"
+    ],
+    "author": {
+        "name": "Devanthos",
+        "url": "https://devanthos.com"
+    },
+    "license": "MIT",
+    "engines": {
+        "node": ">=16.0.0"
+    },
+    "dependencies": {
+        "chalk": "^5.3.0",
+        "degit": "^2.8.4",
+        "inquirer": "^9.2.12",
+        "ora": "^7.0.1"
+    },
+    "devDependencies": {
+        "eslint": "^8.57.0",
+        "prettier": "^3.1.1"
+    },
+    "scripts": {
+        "test": "node index.js",
+        "lint": "eslint .",
+        "format": "prettier --write .",
+        "dev": "node index.js",
+        "prepublishOnly": "npm run lint"
+    }
+}
