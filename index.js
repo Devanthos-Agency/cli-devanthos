@@ -5,6 +5,8 @@ import chalk from "chalk";
 import { fileURLToPath } from "url";
 import { cloneTemplate } from "./utils/clone.js";
 import { installDeps } from "./utils/install.js";
+import { pluginManager } from "./utils/plugins.js";
+import { checkForUpdates } from "./utils/update.js";
 
 // Banner ASCII mejorado para Devanthos
 const showBanner = () => {
@@ -53,10 +55,30 @@ const validateProjectName = input => {
     return true;
 };
 
-// Función principal mejorada
+// Función principal mejorada con plugins y updates
 const main = async () => {
     try {
         showBanner();
+
+        // Chequear actualizaciones (no bloqueante)
+        checkForUpdates({ silent: false }).catch(() => {
+            // Ignorar errores silenciosamente
+        });
+
+        // Cargar plugin de actualización de dependencias
+        const pluginPath = new URL("./utils/dependency-updater.plugin.js", import.meta.url)
+            .pathname;
+        const cleanPluginPath =
+            process.platform === "win32" && pluginPath.startsWith("/")
+                ? pluginPath.substring(1)
+                : pluginPath;
+        await pluginManager.loadPlugin(cleanPluginPath);
+
+        // Descubrir y cargar plugins adicionales
+        const pluginCount = await pluginManager.discoverPlugins();
+        if (pluginCount > 1) {
+            console.log(chalk.gray(`🔌 ${pluginCount} plugin(s) cargado(s)\n`));
+        }
 
         console.log(chalk.cyan("¡Bienvenido al generador de plantillas Devanthos! 👋\n"));
 
@@ -104,6 +126,9 @@ const main = async () => {
             expo: "Expo"
         };
 
+        // Hook: beforeClone
+        await pluginManager.executeHook("beforeClone", { framework, projectName });
+
         console.log(
             chalk.cyan(
                 `\n📁 Creando proyecto "${projectName}" con ${frameworkNames[framework]}...\n`
@@ -119,13 +144,27 @@ const main = async () => {
         try {
             await cloneTemplate(framework, projectName);
             cloneSpinner.succeed(chalk.green("✅ Plantilla descargada exitosamente"));
+
+            // Hook: afterClone (aquí el plugin actualizará las dependencias)
+            await pluginManager.executeHook("afterClone", { framework, projectName });
         } catch (error) {
             cloneSpinner.fail(chalk.red("❌ Error al descargar la plantilla"));
+
+            // Hook: onError
+            await pluginManager.executeHook("onError", {
+                error,
+                stage: "clone",
+                framework,
+                projectName
+            });
             throw error;
         }
 
         // Instalar dependencias si se solicita
         if (installDependencies) {
+            // Hook: beforeInstall
+            await pluginManager.executeHook("beforeInstall", { projectName });
+
             console.log(chalk.cyan("\n📦 Instalando dependencias...\n"));
 
             const installSpinner = ora({
@@ -136,6 +175,9 @@ const main = async () => {
             try {
                 await installDeps(projectName);
                 installSpinner.succeed(chalk.green("✅ Dependencias instaladas correctamente"));
+
+                // Hook: afterInstall
+                await pluginManager.executeHook("afterInstall", { projectName });
             } catch (error) {
                 installSpinner.warn(
                     chalk.yellow("⚠️ Hubo un problema con la instalación automática")
@@ -143,6 +185,13 @@ const main = async () => {
                 console.log(
                     chalk.gray(`Podés instalar manualmente con: cd ${projectName} && npm install`)
                 );
+
+                // Hook: onError
+                await pluginManager.executeHook("onError", {
+                    error,
+                    stage: "install",
+                    projectName
+                });
             }
         }
 
@@ -163,6 +212,13 @@ const main = async () => {
         console.log(chalk.gray("   Documentación: https://docs.devanthos.com"));
         console.log(chalk.gray("   Soporte: https://discord.gg/devanthos\n"));
 
+        // Hook: onComplete
+        await pluginManager.executeHook("onComplete", {
+            framework,
+            projectName,
+            installDependencies
+        });
+
         // Forzar salida exitosa después de un breve delay
         setTimeout(() => {
             process.exit(0);
@@ -172,6 +228,13 @@ const main = async () => {
         console.error(chalk.red(error.message));
         console.log(chalk.gray("\n💡 Si el problema persiste, reportalo en:"));
         console.log(chalk.cyan("   https://github.com/devanthos/create-devanthos-app/issues\n"));
+
+        // Hook: onError
+        await pluginManager.executeHook("onError", {
+            error,
+            stage: "main"
+        });
+
         process.exit(1);
     }
 };
