@@ -6,14 +6,19 @@ import chalk from "chalk";
 // Configuración de plantillas (actualizar con tus repositorios reales)
 const TEMPLATES = {
     astro: {
-        repo: "Devanthos-Agency/astro-template-devanthos",
+        repo: "devanthos/astro-template-devanthos",
         description:
             "Plantilla moderna de Astro con TypeScript, Tailwind CSS y componentes optimizados"
     },
     next: {
-        repo: "Devanthos-Agency/next-template-devanthos",
+        repo: "devanthos/next-template-devanthos",
         description:
             "Plantilla de Next.js con App Router, TypeScript, Tailwind CSS y mejores prácticas"
+    },
+    expo: {
+        repo: "devanthos/expo-template-devanthos",
+        description:
+            "Plantilla de Expo con React Native, TypeScript, NativeWind y navegación configurada"
     }
 };
 

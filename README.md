@@ -7,7 +7,7 @@
 ![Node.js](https://img.shields.io/badge/Node.js-16+-339933?style=for-the-badge&logo=node.js)
 ![License](https://img.shields.io/badge/License-MIT-blue?style=for-the-badge)
 
-**CLI oficial de Devanthos para crear proyectos modernos con Astro y Next.js**
+**CLI oficial de Devanthos para crear proyectos modernos con Astro, Next.js y Expo**
 
 _Plantillas profesionales, optimizadas y listas para producción_ ✨
 
@@ -41,7 +41,7 @@ pnpm create devanthos-app
 
 El asistente te guiará paso a paso:
 
-1. **Selecciona el framework** (Astro o Next.js)
+1. **Selecciona el framework** (Astro, Next.js o Expo)
 2. **Nombra tu proyecto**
 3. **Confirma instalación automática**
 4. **¡Listo!** 🎉
@@ -77,6 +77,20 @@ El asistente te guiará paso a paso:
 - 🗃️ Base de datos (Prisma + SQLite)
 - 🧪 Testing (Jest + React Testing Library)
 - 📊 Métricas y Analytics
+
+### 📱 Expo Template
+
+**Ideal para:** Aplicaciones móviles, apps nativas, MVP rápidos
+
+**Incluye:**
+
+- 🚀 Expo SDK 50+ con EAS Build
+- 🎨 NativeWind (Tailwind para React Native)
+- 📝 TypeScript configurado
+- 🧭 Navegación (React Navigation)
+- 🔍 Estado global (Zustand)
+- 📷 Cámara y multimedia listos
+- 📦 Publicación automática (EAS)
 
 ---
 

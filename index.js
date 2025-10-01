@@ -24,7 +24,7 @@ const showBanner = () => {
 ║                                                     ║
 ║      🚀 ${chalk.cyan.bold("DEVANTHOS CLI")} - Create Modern Apps          ║
 ║                                                     ║
-║    ${chalk.gray("Plantillas profesionales para Astro & Next.js")}    ║    
+║ ${chalk.gray("Plantillas profesionales para Astro, Next.js y Expo")} ║    
 ╚═════════════════════════════════════════════════════╝
   `)
     );
@@ -73,6 +73,10 @@ const main = async () => {
                     {
                         name: "⚛️ Next.js - Aplicaciones dinámicas, dashboards y SaaS",
                         value: "next"
+                    },
+                    {
+                        name: "📱 Expo - Aplicaciones móviles con React Native",
+                        value: "expo"
                     }
                 ]
             },
@@ -94,9 +98,15 @@ const main = async () => {
 
         const { framework, projectName, installDependencies } = answers;
 
+        const frameworkNames = {
+            astro: "Astro",
+            next: "Next.js",
+            expo: "Expo"
+        };
+
         console.log(
             chalk.cyan(
-                `\n📁 Creando proyecto "${projectName}" con ${framework === "astro" ? "Astro" : "Next.js"}...\n`
+                `\n📁 Creando proyecto "${projectName}" con ${frameworkNames[framework]}...\n`
             )
         );
 

@@ -25,13 +25,17 @@
         "create-app",
         "astro",
         "nextjs",
+        "expo",
+        "react-native",
+        "mobile",
         "template",
         "starter",
         "boilerplate",
         "scaffold",
         "generator",
         "frontend",
-        "web-development"
+        "web-development",
+        "mobile-development"
     ],
     "author": {
         "name": "Devanthos",

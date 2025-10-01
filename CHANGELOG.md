@@ -9,11 +9,15 @@ y este proyecto se adhiere al [Versionado Semántico](https://semver.org/lang/es
 
 ### Agregado
 
-- Funcionalidades en desarrollo
+- 📱 Soporte para plantillas de Expo/React Native
+- 🚀 Nueva opción de framework móvil en el CLI
+- 📖 Documentación actualizada con información de Expo
+- 🏷️ Keywords relacionadas con desarrollo móvil
 
 ### Cambiado
 
-- Cambios en funcionalidades existentes
+- 🎨 Interfaz actualizada con tercera opción de framework
+- 📋 Mensajes mejorados para incluir Expo en descripciones
 
 ### Deprecado
 
