@@ -108,6 +108,7 @@ npx create-devanthos-app
 ¿Qué tipo de proyecto querés crear?
 ❯ 🌌 Astro - Sitios estáticos y landing pages ultra rápidas
   ⚛️ Next.js - Aplicaciones dinámicas, dashboards y SaaS
+  📱 Expo - Aplicaciones móviles con React Native
 ```
 
 ### 3. Nombrar el proyecto
@@ -157,14 +158,21 @@ npx create-devanthos-app
 
 ### Variables de entorno
 
-Puedes configurar opciones mediante variables de entorno:
-
 ```bash
 # Modo desarrollo (más logs)
 NODE_ENV=development npx create-devanthos-app
 
-# Saltar instalación automática
-SKIP_INSTALL=true npx create-devanthos-app
+# Desactivar actualización automática del CLI
+export DEVANTHOS_NO_UPDATE_CHECK=true
+
+# Desactivar actualización de dependencias
+export DEVANTHOS_UPDATE_DEPS=false
+
+# Habilitar auditoría de seguridad
+export DEVANTHOS_AUDIT=true
+
+# Modo verbose (mostrar detalles)
+export DEVANTHOS_VERBOSE=true
 ```
 
 ### Gestores de paquetes
@@ -178,7 +186,99 @@ El CLI detecta automáticamente el mejor gestor disponible:
 
 ---
 
-## 🛠️ Desarrollo y contribución
+## � Sistema de Plugins
+
+Devanthos CLI incluye un **sistema de plugins extensible** que te permite personalizar el comportamiento del CLI.
+
+### Plugin Integrado: Actualización de Dependencias
+
+**🎯 Funcionalidad principal:**
+
+- ✅ Actualiza automáticamente las dependencias a las últimas versiones
+- ✅ Consulta npm registry en tiempo real
+- ✅ Soporta Astro, Next.js y Expo
+- ✅ Actualiza tanto `dependencies` como `devDependencies`
+- ✅ Preserva compatibilidad con prefijo `^`
+- ✅ Auditoría de seguridad opcional
+
+**Variables de control:**
+
+```bash
+# Desactivar actualizaciones (default: true)
+export DEVANTHOS_UPDATE_DEPS=false
+
+# Habilitar auditoría de seguridad (default: false)
+export DEVANTHOS_AUDIT=true
+
+# Mostrar detalles de actualizaciones (default: false)
+export DEVANTHOS_VERBOSE=true
+```
+
+### Crear tu propio plugin
+
+Crea un archivo `mi-plugin.plugin.js`:
+
+```javascript
+export default {
+    name: "mi-plugin",
+    version: "1.0.0",
+    description: "Mi plugin personalizado",
+
+    async afterClone(context) {
+        console.log(`Proyecto ${context.projectName} clonado!`);
+        return context;
+    }
+};
+```
+
+### Ubicaciones de plugins
+
+Los plugins se cargan automáticamente desde:
+
+1. `./devanthos.plugins.js` (directorio actual)
+2. `./.devanthos/plugins/` (proyecto)
+3. `~/.devanthos/plugins/` (global/usuario)
+
+📚 **Ver ejemplos completos:** [examples/README.md](./examples/README.md)
+
+---
+
+## 🤖 Actualizaciones Automáticas
+
+El CLI chequea automáticamente cada **24 horas** si hay una nueva versión disponible.
+
+### Características
+
+- ✅ Chequeo automático no bloqueante
+- ✅ Caché inteligente (evita saturar npm)
+- ✅ Detección de método de instalación
+- ✅ Mensajes personalizados según instalación
+
+### Desactivar chequeos
+
+```bash
+export DEVANTHOS_NO_UPDATE_CHECK=true
+npx create-devanthos-app
+```
+
+### Actualizar manualmente
+
+**Si instalaste globalmente:**
+
+```bash
+npm install -g create-devanthos-app@latest
+```
+
+**Si usas npx:**
+
+```bash
+npx create-devanthos-app@latest
+# Ya siempre usa la última versión
+```
+
+---
+
+## �🛠️ Desarrollo y contribución
 
 ### Clonar el repositorio
 

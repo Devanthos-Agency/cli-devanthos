@@ -9,15 +9,49 @@ y este proyecto se adhiere al [Versionado Semántico](https://semver.org/lang/es
 
 ### Agregado
 
-- 📱 Soporte para plantillas de Expo/React Native
+- � **Sistema de plugins completo** con API de hooks y carga automática
+- 🤖 **Actualizaciones automáticas** con chequeo inteligente y caché (cada 24h)
+- 📦 **Plugin de actualización de dependencias** integrado por defecto
+- �📱 Soporte para plantillas de Expo/React Native
 - 🚀 Nueva opción de framework móvil en el CLI
-- 📖 Documentación actualizada con información de Expo
+- 📖 Documentación completa de plugins con ejemplos
 - 🏷️ Keywords relacionadas con desarrollo móvil
+- 🔍 Auditoría de seguridad opcional con npm audit
+- 📚 Carpeta `examples/` con guías de creación de plugins
 
 ### Cambiado
 
 - 🎨 Interfaz actualizada con tercera opción de framework
 - 📋 Mensajes mejorados para incluir Expo en descripciones
+- ⚡ Integración de hooks de plugins en el flujo principal del CLI
+- 🔄 Las plantillas ahora se actualizan automáticamente a las últimas versiones
+
+### Nuevo - Sistema de Plugins
+
+- ✅ API completa de hooks (`beforeClone`, `afterClone`, `beforeInstall`, `afterInstall`, `onError`, `onComplete`)
+- ✅ Carga automática desde múltiples ubicaciones
+- ✅ Validación de estructura de plugins
+- ✅ Sistema de prioridades para orden de ejecución
+- ✅ Gestión de plugins (listar, desactivar)
+- ✅ Soporte para plugins locales, de proyecto y globales
+
+### Nuevo - Plugin de Actualización de Dependencias
+
+- ✅ Actualización automática de dependencias principales por framework
+- ✅ Consulta npm registry para obtener últimas versiones
+- ✅ Soporte para Astro, Next.js y Expo
+- ✅ Actualiza dependencies y devDependencies
+- ✅ Muestra resumen detallado de actualizaciones
+- ✅ Variables de entorno para control (`DEVANTHOS_UPDATE_DEPS`, `DEVANTHOS_AUDIT`, `DEVANTHOS_VERBOSE`)
+
+### Nuevo - Actualizaciones Automáticas del CLI
+
+- ✅ Chequeo automático cada 24 horas
+- ✅ Caché inteligente para no saturar npm registry
+- ✅ Detección de método de instalación (global vs npx)
+- ✅ Mensajes personalizados según método de instalación
+- ✅ Comando manual para forzar chequeo
+- ✅ Variable de entorno para desactivar (`DEVANTHOS_NO_UPDATE_CHECK`)
 
 ### Deprecado
 
