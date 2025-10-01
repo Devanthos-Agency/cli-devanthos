@@ -24,7 +24,7 @@ const showBanner = () => {
 ║                                                     ║
 ║      🚀 ${chalk.cyan.bold("DEVANTHOS CLI")} - Create Modern Apps          ║
 ║                                                     ║
-║     ${chalk.gray("Plantillas profesionales para Astro & Next.js")}   ║    
+║    ${chalk.gray("Plantillas profesionales para Astro & Next.js")}    ║    
 ╚═════════════════════════════════════════════════════╝
   `)
     );
