@@ -1,6 +1,6 @@
 {
     "name": "create-devanthos-app",
-    "version": "1.5.0",
+    "version": "1.5.1",
     "type": "module",
     "description": "CLI oficial para crear proyectos con las plantillas modernas Devanthos (Astro, Next.js, Expo y más) - Con sistema de plugins, actualizaciones automáticas, CLI flags, Git auto-init, presets y configuración personalizable.",
     "homepage": "https://devanthos.com",
