@@ -94,29 +94,8 @@ const main = async () => {
         const answers = await inquirer.prompt([
             {
                 type: "list",
-                name: "usePreset",
-                message: "¿Querés usar un preset predefinido?",
-                choices: [
-                    { name: "No, configurar manualmente", value: false },
-                    { name: "Sí, elegir un preset", value: true }
-                ],
-                default: false
-            },
-            {
-                type: "list",
-                name: "preset",
-                message: "Seleccioná un preset:",
-                when: answers => answers.usePreset,
-                choices: ProjectConfig.listPresets().map(preset => ({
-                    name: `${preset.name} - ${preset.description} (${preset.framework})`,
-                    value: preset.id
-                }))
-            },
-            {
-                type: "list",
                 name: "framework",
                 message: "¿Qué tipo de proyecto querés crear?",
-                when: answers => !answers.usePreset,
                 choices: [
                     {
                         name: "🌌 Astro - Sitios estáticos y landing pages ultra rápidas",
@@ -131,6 +110,35 @@ const main = async () => {
                         value: "expo"
                     }
                 ]
+            },
+            {
+                type: "list",
+                name: "preset",
+                message: "Seleccioná una configuración:",
+                choices: answers => {
+                    // Filtrar presets por framework seleccionado
+                    const presetsForFramework = ProjectConfig.listPresets().filter(
+                        preset => preset.framework === answers.framework
+                    );
+
+                    // Agregar opción de configuración manual al inicio
+                    const choices = [
+                        {
+                            name: "⚙️ Configuración manual (sin preset)",
+                            value: null
+                        }
+                    ];
+
+                    // Agregar presets disponibles
+                    presetsForFramework.forEach(preset => {
+                        choices.push({
+                            name: `${preset.name} - ${preset.description}`,
+                            value: preset.id
+                        });
+                    });
+
+                    return choices;
+                }
             },
             {
                 type: "input",
@@ -158,25 +166,23 @@ const main = async () => {
                 name: "saveConfig",
                 message: "¿Guardar configuración en devanthos.config.js?",
                 default: false,
-                when: answers => answers.usePreset
+                when: answers => answers.preset !== null // Solo si eligió un preset
             }
         ]);
 
-        // Determinar framework (desde preset o selección manual)
-        let framework = answers.framework;
+        // Determinar si está usando preset
+        const usingPreset = answers.preset !== null;
+        const { framework, projectName, installDependencies, initGit, saveConfig } = answers;
         let presetConfig = null;
 
-        if (answers.usePreset && answers.preset) {
+        if (usingPreset) {
             presetConfig = ProjectConfig.applyPreset(answers.preset);
-            framework = presetConfig.framework || answers.framework;
 
             console.log(
                 chalk.cyan(`\n✨ Usando preset: ${chalk.bold(presetConfig._presetMeta.name)}`)
             );
             console.log(chalk.gray(`   ${presetConfig._presetMeta.description}\n`));
         }
-
-        const { projectName, installDependencies, initGit, saveConfig } = answers;
 
         const frameworkNames = {
             astro: "Astro",
