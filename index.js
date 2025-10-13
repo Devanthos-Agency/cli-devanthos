@@ -3,10 +3,19 @@ import inquirer from "inquirer";
 import ora from "ora";
 import chalk from "chalk";
 import { fileURLToPath } from "url";
+import { Command } from "commander";
+import { readFileSync } from "fs";
 import { cloneTemplate } from "./utils/clone.js";
 import { installDeps } from "./utils/install.js";
 import { pluginManager } from "./utils/plugins.js";
 import { checkForUpdates } from "./utils/update.js";
+import { initGitRepo, isGitInstalled } from "./utils/git.js";
+import { ProjectConfig, PRESETS } from "./utils/config.js";
+
+// Obtener versión del package.json
+const __filename = fileURLToPath(import.meta.url);
+const packageJson = JSON.parse(readFileSync(new URL("./package.json", import.meta.url), "utf-8"));
+const VERSION = packageJson.version;
 
 // Banner ASCII mejorado para Devanthos
 const showBanner = () => {
@@ -85,8 +94,29 @@ const main = async () => {
         const answers = await inquirer.prompt([
             {
                 type: "list",
+                name: "usePreset",
+                message: "¿Querés usar un preset predefinido?",
+                choices: [
+                    { name: "No, configurar manualmente", value: false },
+                    { name: "Sí, elegir un preset", value: true }
+                ],
+                default: false
+            },
+            {
+                type: "list",
+                name: "preset",
+                message: "Seleccioná un preset:",
+                when: answers => answers.usePreset,
+                choices: ProjectConfig.listPresets().map(preset => ({
+                    name: `${preset.name} - ${preset.description} (${preset.framework})`,
+                    value: preset.id
+                }))
+            },
+            {
+                type: "list",
                 name: "framework",
                 message: "¿Qué tipo de proyecto querés crear?",
+                when: answers => !answers.usePreset,
                 choices: [
                     {
                         name: "🌌 Astro - Sitios estáticos y landing pages ultra rápidas",
@@ -115,10 +145,38 @@ const main = async () => {
                 name: "installDependencies",
                 message: "¿Querés instalar las dependencias automáticamente?",
                 default: true
+            },
+            {
+                type: "confirm",
+                name: "initGit",
+                message: "¿Inicializar repositorio Git?",
+                default: true,
+                when: () => isGitInstalled()
+            },
+            {
+                type: "confirm",
+                name: "saveConfig",
+                message: "¿Guardar configuración en devanthos.config.js?",
+                default: false,
+                when: answers => answers.usePreset
             }
         ]);
 
-        const { framework, projectName, installDependencies } = answers;
+        // Determinar framework (desde preset o selección manual)
+        let framework = answers.framework;
+        let presetConfig = null;
+
+        if (answers.usePreset && answers.preset) {
+            presetConfig = ProjectConfig.applyPreset(answers.preset);
+            framework = presetConfig.framework || answers.framework;
+
+            console.log(
+                chalk.cyan(`\n✨ Usando preset: ${chalk.bold(presetConfig._presetMeta.name)}`)
+            );
+            console.log(chalk.gray(`   ${presetConfig._presetMeta.description}\n`));
+        }
+
+        const { projectName, installDependencies, initGit, saveConfig } = answers;
 
         const frameworkNames = {
             astro: "Astro",
@@ -160,6 +218,30 @@ const main = async () => {
             throw error;
         }
 
+        // Inicializar Git si se solicita
+        if (initGit && isGitInstalled()) {
+            const gitSpinner = ora({
+                text: "Inicializando repositorio Git...",
+                color: "cyan"
+            }).start();
+
+            try {
+                const gitResult = await initGitRepo(projectName, {
+                    initialCommit: true,
+                    branch: "main",
+                    verbose: false
+                });
+
+                if (gitResult.success) {
+                    gitSpinner.succeed(chalk.green("✅ Repositorio Git inicializado"));
+                } else {
+                    gitSpinner.warn(chalk.yellow("⚠️ No se pudo inicializar Git automáticamente"));
+                }
+            } catch (error) {
+                gitSpinner.warn(chalk.yellow("⚠️ Git init falló (no crítico)"));
+            }
+        }
+
         // Instalar dependencias si se solicita
         if (installDependencies) {
             // Hook: beforeInstall
@@ -192,6 +274,27 @@ const main = async () => {
                     stage: "install",
                     projectName
                 });
+            }
+        }
+
+        // Guardar configuración si se solicitó
+        if (saveConfig && presetConfig) {
+            const configSpinner = ora({
+                text: "Guardando configuración...",
+                color: "cyan"
+            }).start();
+
+            try {
+                const configResult = ProjectConfig.save(projectName, presetConfig);
+                if (configResult.success) {
+                    configSpinner.succeed(
+                        chalk.green("✅ Configuración guardada en devanthos.config.js")
+                    );
+                } else {
+                    configSpinner.warn(chalk.yellow("⚠️ No se pudo guardar la configuración"));
+                }
+            } catch (error) {
+                configSpinner.warn(chalk.yellow("⚠️ Error al guardar configuración (no crítico)"));
             }
         }
 
@@ -239,13 +342,289 @@ const main = async () => {
     }
 };
 
+// Función para crear proyecto en modo no-interactivo (CLI flags)
+const createProjectNonInteractive = async (projectName, options) => {
+    try {
+        const {
+            template,
+            install = true,
+            git = true,
+            skipUpdateCheck = false,
+            saveConfig = false,
+            _preset,
+            _presetConfig
+        } = options;
+
+        // Validar template
+        const validTemplates = ["astro", "next", "expo"];
+        if (!validTemplates.includes(template)) {
+            console.log(chalk.red(`\n❌ Template inválido: "${template}"\n`));
+            console.log(chalk.cyan("Templates disponibles:"));
+            console.log(chalk.gray("  • astro  - Sitios estáticos y landing pages"));
+            console.log(chalk.gray("  • next   - Aplicaciones web dinámicas"));
+            console.log(chalk.gray("  • expo   - Aplicaciones móviles\n"));
+            process.exit(1);
+        }
+
+        // Validar nombre del proyecto
+        const validation = validateProjectName(projectName);
+        if (validation !== true) {
+            console.log(chalk.red(`\n❌ ${validation}\n`));
+            process.exit(1);
+        }
+
+        showBanner();
+
+        // Mostrar preset si se está usando
+        if (_preset && _presetConfig) {
+            console.log(
+                chalk.cyan(`\n✨ Usando preset: ${chalk.bold(_presetConfig._presetMeta.name)}`)
+            );
+            console.log(chalk.gray(`   ${_presetConfig._presetMeta.description}\n`));
+        }
+
+        // Chequear actualizaciones si no se saltea
+        if (!skipUpdateCheck) {
+            await checkForUpdates({ silent: true }).catch(() => {});
+        }
+
+        // Cargar plugins
+        const pluginPath = new URL("./utils/dependency-updater.plugin.js", import.meta.url)
+            .pathname;
+        const cleanPluginPath =
+            process.platform === "win32" && pluginPath.startsWith("/")
+                ? pluginPath.substring(1)
+                : pluginPath;
+        await pluginManager.loadPlugin(cleanPluginPath);
+        await pluginManager.discoverPlugins();
+
+        const frameworkNames = {
+            astro: "Astro",
+            next: "Next.js",
+            expo: "Expo"
+        };
+
+        console.log(
+            chalk.cyan(
+                `\n📁 Creando proyecto "${projectName}" con ${frameworkNames[template]}...\n`
+            )
+        );
+
+        // Hook: beforeClone
+        await pluginManager.executeHook("beforeClone", {
+            framework: template,
+            projectName
+        });
+
+        // Clonar plantilla
+        const cloneSpinner = ora({
+            text: `Descargando plantilla ${template}...`,
+            color: "cyan"
+        }).start();
+
+        try {
+            await cloneTemplate(template, projectName);
+            cloneSpinner.succeed(chalk.green("✅ Plantilla descargada exitosamente"));
+
+            // Hook: afterClone
+            await pluginManager.executeHook("afterClone", {
+                framework: template,
+                projectName
+            });
+        } catch (error) {
+            cloneSpinner.fail(chalk.red("❌ Error al descargar la plantilla"));
+            throw error;
+        }
+
+        // Inicializar Git si está habilitado
+        if (git && isGitInstalled()) {
+            const gitSpinner = ora({
+                text: "Inicializando repositorio Git...",
+                color: "cyan"
+            }).start();
+
+            try {
+                const gitResult = await initGitRepo(projectName, {
+                    initialCommit: true,
+                    branch: "main",
+                    verbose: false
+                });
+
+                if (gitResult.success) {
+                    gitSpinner.succeed(chalk.green("✅ Repositorio Git inicializado"));
+                } else {
+                    gitSpinner.warn(chalk.yellow("⚠️ No se pudo inicializar Git automáticamente"));
+                }
+            } catch (error) {
+                gitSpinner.warn(chalk.yellow("⚠️ Git init falló (no crítico)"));
+            }
+        }
+
+        // Instalar dependencias si está habilitado
+        if (install) {
+            await pluginManager.executeHook("beforeInstall", { projectName });
+
+            console.log(chalk.cyan("\n📦 Instalando dependencias...\n"));
+
+            const installSpinner = ora({
+                text: "Instalando paquetes...",
+                color: "yellow"
+            }).start();
+
+            try {
+                await installDeps(projectName);
+                installSpinner.succeed(chalk.green("✅ Dependencias instaladas correctamente"));
+
+                await pluginManager.executeHook("afterInstall", { projectName });
+            } catch (error) {
+                installSpinner.warn(
+                    chalk.yellow("⚠️ Hubo un problema con la instalación automática")
+                );
+                console.log(
+                    chalk.gray(`Podés instalar manualmente con: cd ${projectName} && npm install`)
+                );
+            }
+        }
+
+        // Guardar configuración si se solicitó
+        if (saveConfig && _presetConfig) {
+            const configSpinner = ora({
+                text: "Guardando configuración...",
+                color: "cyan"
+            }).start();
+
+            try {
+                const configResult = ProjectConfig.save(projectName, _presetConfig);
+                if (configResult.success) {
+                    configSpinner.succeed(
+                        chalk.green("✅ Configuración guardada en devanthos.config.js")
+                    );
+                } else {
+                    configSpinner.warn(chalk.yellow("⚠️ No se pudo guardar la configuración"));
+                }
+            } catch (error) {
+                configSpinner.warn(chalk.yellow("⚠️ Error al guardar configuración (no crítico)"));
+            }
+        }
+
+        // Mensaje de éxito
+        console.log(chalk.green.bold(`\n🎉 ¡Proyecto "${projectName}" creado exitosamente!\n`));
+
+        console.log(chalk.cyan.bold("👉 Próximos pasos:"));
+        console.log(chalk.gray(`   cd ${projectName}`));
+
+        if (!install) {
+            console.log(chalk.gray("   npm install  # o pnpm install"));
+        }
+
+        console.log(chalk.gray("   npm run dev  # o pnpm dev"));
+
+        console.log(chalk.magenta.bold("\n🚀 ¡Gracias por usar Devanthos! 💜\n"));
+
+        // Hook: onComplete
+        await pluginManager.executeHook("onComplete", {
+            framework: template,
+            projectName,
+            installDependencies: install
+        });
+
+        process.exit(0);
+    } catch (error) {
+        console.log(chalk.red.bold("\n❌ Error:"));
+        console.error(chalk.red(error.message));
+        process.exit(1);
+    }
+};
+
+// Configurar CLI con Commander
+const program = new Command();
+
+program
+    .name("create-devanthos-app")
+    .description("CLI oficial para crear proyectos con plantillas Devanthos")
+    .version(VERSION)
+    .argument("[project-name]", "Nombre del proyecto")
+    .option("-t, --template <framework>", "Framework: astro, next, expo")
+    .option(
+        "-p, --preset <preset>",
+        "Preset: landing-page, dashboard, blog, ecommerce, portfolio, mobile-app, minimal"
+    )
+    .option("--no-install", "No instalar dependencias automáticamente")
+    .option("--no-git", "No inicializar repositorio Git")
+    .option("--skip-update-check", "Saltar verificación de actualizaciones")
+    .option("--save-config", "Guardar configuración en devanthos.config.js")
+    .action(async (projectName, options) => {
+        // Si no hay argumentos, mostrar wizard interactivo
+        if (!projectName && !options.template && !options.preset) {
+            return main();
+        }
+
+        // Si falta el nombre del proyecto
+        if (!projectName) {
+            console.log(chalk.red("\n❌ Debes especificar un nombre de proyecto\n"));
+            console.log(chalk.cyan("Ejemplos:"));
+            console.log(chalk.gray("  npx create-devanthos-app mi-proyecto -t astro"));
+            console.log(chalk.gray("  npx create-devanthos-app mi-blog -p blog\n"));
+            process.exit(1);
+        }
+
+        // Si tiene preset, no necesita template
+        if (options.preset) {
+            const validPresets = Object.keys(PRESETS);
+            if (!validPresets.includes(options.preset)) {
+                console.log(chalk.red(`\n❌ Preset inválido: "${options.preset}"\n`));
+                console.log(chalk.cyan("Presets disponibles:"));
+                ProjectConfig.listPresets().forEach(p => {
+                    console.log(chalk.gray(`  • ${p.id.padEnd(15)} - ${p.description}`));
+                });
+                console.log();
+                process.exit(1);
+            }
+
+            // Aplicar preset y extraer framework
+            const presetConfig = ProjectConfig.applyPreset(options.preset);
+            options.template = presetConfig.framework;
+            options._preset = options.preset;
+            options._presetConfig = presetConfig;
+        }
+
+        // Si falta el template (y no hay preset)
+        if (!options.template) {
+            console.log(
+                chalk.red("\n❌ Debes especificar un template con -t o un preset con -p\n")
+            );
+            console.log(chalk.cyan("Ejemplos:"));
+            console.log(chalk.gray("  npx create-devanthos-app mi-proyecto -t astro"));
+            console.log(chalk.gray("  npx create-devanthos-app mi-blog -p blog\n"));
+            process.exit(1);
+        }
+
+        // Crear proyecto en modo no-interactivo
+        await createProjectNonInteractive(projectName, options);
+    });
+
+// Comando adicional para listar presets
+program
+    .command("list-presets")
+    .description("Listar todos los presets disponibles")
+    .action(() => {
+        console.log(chalk.cyan.bold("\n📦 Presets Disponibles:\n"));
+
+        ProjectConfig.listPresets().forEach(preset => {
+            console.log(chalk.bold(`  ${preset.name}`));
+            console.log(chalk.gray(`  ID: ${preset.id}`));
+            console.log(chalk.gray(`  Framework: ${preset.framework}`));
+            console.log(chalk.gray(`  ${preset.description}`));
+            console.log();
+        });
+
+        console.log(chalk.cyan("Uso:"));
+        console.log(chalk.gray("  npx create-devanthos-app mi-proyecto -p <preset-id>\n"));
+    });
+
 // Verificar si es llamada directa (no importada)
-const __filename = fileURLToPath(import.meta.url);
 const isDirectCall = process.argv[1] === __filename;
 
 if (isDirectCall) {
-    main().catch(error => {
-        console.error(chalk.red("Error fatal:"), error);
-        process.exit(1);
-    });
+    program.parse(process.argv);
 }
