@@ -7,6 +7,38 @@ y este proyecto se adhiere al [Versionado Semántico](https://semver.org/lang/es
 
 ---
 
+## [1.5.1] - 2025-01-14
+
+### 🎨 Mejorado
+
+#### Experiencia de Usuario (UX)
+
+- **Flujo de presets mejorado** - Los presets ahora se muestran **después** de elegir el framework
+- **Filtrado inteligente** - Solo se muestran presets relevantes para el framework seleccionado
+- **Configuración manual integrada** - Opción "⚙️ Configuración manual" en la lista de presets
+- **Eliminada pregunta redundante** - Ya no pregunta "¿Querés usar un preset?" al inicio
+
+#### Cambios en el Wizard
+
+**Antes:**
+
+1. ¿Querés usar un preset? (Sí/No)
+2. Seleccionar preset (si eligió Sí) o Framework (si eligió No)
+3. Framework...
+
+**Ahora:**
+
+1. ¿Qué tipo de proyecto querés crear? (Framework)
+2. Seleccioná una configuración: (presets filtrados + opción manual)
+3. Nombre del proyecto...
+
+### 📚 Documentación
+
+- Actualizado README con nuevo flujo
+- Agregado test de integración `test-preset-integration.js`
+
+---
+
 ## [1.5.0] - 2025-01-14
 
 ### 🎯 Características principales
