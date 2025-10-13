@@ -23,10 +23,16 @@ _Plantillas profesionales, optimizadas y listas para producción_ ✨
 - 🎨 **Experiencia premium** - Interfaz moderna con colores y animaciones
 - 🔧 **Configuración completa** - TypeScript, Tailwind CSS, ESLint y más
 - 📱 **Responsive ready** - Diseños adaptativos desde el primer día
+- 🆕 **CLI Flags** - Modo interactivo o no-interactivo para automatización
+- 🆕 **Git Auto-Init** - Inicialización automática de repositorio Git con commit inicial
+- 🆕 **Presets** - Configuraciones predefinidas para casos de uso comunes
+- 🆕 **Config File** - Guarda y reutiliza configuraciones con `devanthos.config.js`
 
 ---
 
 ## 🚀 Uso rápido
+
+### Modo Interactivo (Wizard)
 
 ```bash
 # Crear un nuevo proyecto (recomendado)
@@ -41,10 +47,62 @@ pnpm create devanthos-app
 
 El asistente te guiará paso a paso:
 
-1. **Selecciona el framework** (Astro, Next.js o Expo)
-2. **Nombra tu proyecto**
-3. **Confirma instalación automática**
-4. **¡Listo!** 🎉
+1. **Usar preset o configurar manualmente** (Nuevo!)
+2. **Selecciona el framework** (Astro, Next.js o Expo)
+3. **Nombra tu proyecto**
+4. **Confirma instalación automática**
+5. **Inicializa Git** (opcional)
+6. **Guarda configuración** (opcional)
+7. **¡Listo!** 🎉
+
+### Modo No-Interactivo (CLI Flags) 🆕
+
+```bash
+# Crear proyecto con template
+npx create-devanthos-app mi-proyecto -t astro
+
+# Crear proyecto con preset (Nuevo!)
+npx create-devanthos-app mi-blog -p blog
+
+# Con configuración guardada
+npx create-devanthos-app mi-dashboard -p dashboard --save-config
+
+# Para CI/CD (sin prompts)
+npx create-devanthos-app build-app -t next --no-git --skip-update-check
+```
+
+**📖 Documentación completa:**
+
+- [CLI Flags](./CLI_FLAGS.md) - Guía de flags y opciones
+- [Presets](./PRESETS.md) - Guía completa de presets y configuración
+
+---
+
+## 📦 Presets Predefinidos 🆕
+
+Crea proyectos optimizados con configuraciones predefinidas:
+
+```bash
+# Ver presets disponibles
+npx create-devanthos-app list-presets
+
+# Usar un preset
+npx create-devanthos-app mi-proyecto -p <preset-id>
+```
+
+### Presets Disponibles
+
+| Preset         | Framework  | Descripción             | Incluye                |
+| -------------- | ---------- | ----------------------- | ---------------------- |
+| `landing-page` | Astro      | Landing page optimizada | Analytics, SEO, Forms  |
+| `dashboard`    | Next.js    | Panel admin completo    | Auth, Database, Charts |
+| `blog`         | Astro      | Blog con MDX            | MDX, RSS, Sitemap      |
+| `ecommerce`    | Next.js    | Tienda online           | Stripe, Cart, Auth     |
+| `portfolio`    | Astro      | Portfolio personal      | MDX, SEO, Projects     |
+| `mobile-app`   | Expo       | App móvil               | Navigation, Auth       |
+| `minimal`      | Cualquiera | Configuración mínima    | TypeScript básico      |
+
+**Ver documentación completa:** [PRESETS.md](./PRESETS.md)
 
 ---
 
