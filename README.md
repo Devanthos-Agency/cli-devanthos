@@ -47,12 +47,12 @@ pnpm create devanthos-app
 
 El asistente te guiará paso a paso:
 
-1. **Usar preset o configurar manualmente** (Nuevo!)
-2. **Selecciona el framework** (Astro, Next.js o Expo)
+1. **Selecciona el framework** (Astro, Next.js o Expo)
+2. **Elige configuración** (preset o manual)
 3. **Nombra tu proyecto**
 4. **Confirma instalación automática**
 5. **Inicializa Git** (opcional)
-6. **Guarda configuración** (opcional)
+6. **Guarda configuración** (opcional, solo si usas preset)
 7. **¡Listo!** 🎉
 
 ### Modo No-Interactivo (CLI Flags) 🆕
