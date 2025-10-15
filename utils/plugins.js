@@ -1,4 +1,4 @@
-import { existsSync, readdirSync, readFileSync, writeFileSync, mkdirSync, copyFileSync } from "fs";
+import { existsSync, readdirSync, readFileSync, mkdirSync, copyFileSync } from "fs";
 import path from "path";
 import chalk from "chalk";
 import { fileURLToPath } from "url";
@@ -94,7 +94,7 @@ class PluginManager {
                         fileList.forEach(fileConfig => {
                             files.push({
                                 ...fileConfig,
-                                framework: framework
+                                framework
                             });
                         });
                     }
@@ -111,7 +111,7 @@ class PluginManager {
                 dependencies: pluginMeta.dependencies || {},
                 devDependencies: pluginMeta.devDependencies || {},
                 envVars: pluginMeta.envVars || [],
-                files: files,
+                files,
                 postInstall: pluginMeta.postInstall || null,
                 features: pluginMeta.features || [],
                 _pluginDir: pluginDir,
@@ -389,7 +389,7 @@ class PluginManager {
 
                 if (deps && Object.keys(deps).length > 0) {
                     if (verbose) {
-                        console.log(chalk.cyan(`\n📦 Instalando dependencias...`));
+                        console.log(chalk.cyan("\n📦 Instalando dependencias..."));
                     }
 
                     const depsArray = Array.isArray(deps)
