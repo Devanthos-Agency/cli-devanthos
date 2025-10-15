@@ -1,0 +1,58 @@
+{
+    "name": "@devanthos/plugin-content",
+    "version": "1.0.0",
+    "description": "Plugin para gestión de contenido con MDX (Markdown + JSX)",
+    "author": "Devanthos",
+    "license": "MIT",
+    "frameworks": ["astro", "next"],
+    "dependencies": {
+        "astro": {
+            "@astrojs/mdx": "^2.0.0",
+            "@astrojs/rss": "^4.0.0",
+            "reading-time": "^1.5.0"
+        },
+        "next": {
+            "next-mdx-remote": "^4.4.1",
+            "gray-matter": "^4.0.3",
+            "reading-time": "^1.5.0",
+            "remark-gfm": "^3.0.1"
+        }
+    },
+    "files": [
+        {
+            "framework": "astro",
+            "source": "src/content/config/config.ts",
+            "destination": "src/content/config.ts"
+        },
+        {
+            "framework": "astro",
+            "source": "src/content/blog/primer-post.md",
+            "destination": "src/content/blog/primer-post.md"
+        },
+        {
+            "framework": "next",
+            "source": "src/lib/mdx.ts",
+            "destination": "lib/mdx.ts"
+        },
+        {
+            "framework": "next",
+            "source": "src/content/posts/primer-post.mdx",
+            "destination": "content/posts/primer-post.mdx"
+        }
+    ],
+    "postInstall": {
+        "message": "📝 Sistema de contenido configurado.",
+        "instructions": [
+            "Astro:",
+            "1. Crea archivos .md o .mdx en src/content/blog/",
+            "2. Usa el frontmatter para metadatos",
+            "3. Importa: import { getCollection } from 'astro:content'",
+            "4. Obtén posts: const posts = await getCollection('blog')",
+            "",
+            "Next.js:",
+            "1. Crea archivos .mdx en content/posts/",
+            "2. Usa las funciones getPost() y getAllPosts()",
+            "3. Renderiza con <MDXRemote /> de next-mdx-remote"
+        ]
+    }
+}
