@@ -7,6 +7,380 @@ y este proyecto se adhiere al [Versionado Semántico](https://semver.org/lang/es
 
 ---
 
+## [1.6.0] - 2025-10-15
+
+### 🚀 SISTEMA DE PLUGINS v2.0 + PLUGIN MERCADO PAGO
+
+**✅ Plugin Loader completamente actualizado para estructura modular**  
+**✅ Nuevo Plugin Installer CLI para proyectos existentes**  
+**✅ Plugin Mercado Pago para pagos en Latinoamérica**
+
+### ✨ Agregado
+
+#### Sistema de Plugins v2.0
+
+- 🔌 **Plugin Loader Modular** - Actualizado `utils/plugins.js`
+    - `loadModularPlugin()` - Carga plugins desde `plugin.json`
+    - `installPlugin()` - Instala plugin en proyecto de usuario
+    - `listAvailablePlugins()` - Lista plugins por framework
+    - Normalización automática de metadata (objeto → array)
+    - Descubrimiento automático de plugins en carpeta `plugins/`
+    - Compatibilidad total con plugins legacy (`.plugin.js`)
+
+- 🛠️ **Plugin Installer CLI** - Nuevo comando `devanthos-plugins`
+    - Modo interactivo (wizard con detección automática de framework)
+    - Modo CLI con flags (`--framework`, `--skip-deps`)
+    - Comando `install` para instalar plugins
+    - Comando `list` para listar plugins disponibles
+    - Copia automática de archivos desde `src/` a proyecto
+    - Instalación automática de dependencias NPM
+    - Muestra instrucciones post-instalación
+
+#### Plugin Mercado Pago (Nuevo)
+
+- 💰 **@devanthos/plugin-mercadopago** - Integración completa con Mercado Pago
+    - **SDK Integration** (`mercadopago.ts`) - Cliente configurado, createPreference(), getPayment()
+    - **Checkout API** (`checkout/route.ts`) - Endpoint POST para crear preferencias
+    - **Webhook IPN** (`webhook/route.ts`) - Manejo de notificaciones en tiempo real
+    - **CheckoutButton** (`CheckoutButton.tsx`) - Componente React con loading states
+    - **ProductCard** (`ProductCard.tsx`) - Card de producto con checkout integrado
+    - **Documentación** (`MERCADOPAGO.md`) - 680 líneas completas
+    - **8 países soportados** - ARG, BRA, CHI, COL, MEX, PER, URY, VEN
+    - **TypeScript completo** - Interfaces para CheckoutItem, PayerInfo, PreferenceData
+    - **Testing ready** - Credenciales de prueba + tarjetas de test
+
+#### Testing y Validación
+
+- 🧪 **test-plugin-loader.js** - Suite completa de tests
+    - 67 tests (100% passing ✅)
+    - Validación de 8 plugins modulares
+    - Validación de estructura `plugin.json`
+    - Validación de archivos fuente
+    - Pruebas de compatibilidad legacy
+    - Listado por framework (Next.js: 6, Astro: 4, Expo: 2)
+
+#### Documentación
+
+- 📚 **plugins/README_PLUGIN_SYSTEM.md** - Documentación completa del sistema
+    - Guía de instalación de plugins
+    - Guía de creación de plugins
+    - Estructura modular explicada
+    - API Reference del Plugin Manager
+    - Migración desde v1.x
+    - Ejemplos completos
+
+### 🔧 Modificado
+
+- **package.json**
+    - Versión: `1.5.3` → `1.6.0`
+    - Nuevo bin: `devanthos-plugins` → `./plugin-installer.js`
+    - Agregado `plugin-installer.js` a files
+
+- **README.md**
+    - Nueva sección "Sistema de Plugins v2.0"
+    - Tabla de 8 plugins disponibles
+    - Ejemplos de instalación con `devanthos-plugins`
+    - Links a documentación completa
+
+### 🐛 Corregido
+
+- Normalización de `files` en `plugin.json` (soporte para formato objeto y array)
+- Detección correcta de framework en plugin installer
+- Mensajes de error mejorados en plugin loader
+
+### 📊 Estadísticas
+
+- **Archivos nuevos:** 4
+- **Archivos modificados:** 3
+- **Líneas de código:** ~1,500 nuevas
+- **Líneas de documentación:** ~700 nuevas
+- **Plugins modulares:** 8/8 (100%)
+- **Tests pasando:** 67/67 (100%)
+- **Frameworks soportados:** 3 (Next.js, Astro, Expo)
+
+### 🎯 Comandos Nuevos
+
+```bash
+# Instalar plugin (interactivo)
+npx devanthos-plugins install
+
+# Instalar plugin específico
+npx devanthos-plugins install @devanthos/plugin-mercadopago
+
+# Listar plugins
+npx devanthos-plugins list
+npx devanthos-plugins list --framework next
+```
+
+---
+
+## [1.5.3] - 2025-10-13
+
+### 🏗️ MIGRACIÓN COMPLETA A ARQUITECTURA v2.0
+
+**✅ 100% de plugins migrados a la nueva estructura modular**
+
+Esta versión completa la reestructuración del sistema de plugins, migrando **todos los 5 plugins restantes** a la nueva arquitectura modular con separación de código, metadata y documentación.
+
+### ✨ Agregado
+
+#### Plugins Migrados a Estructura v2.0
+
+- 🔍 **Plugin SEO** - Ahora con estructura modular completa
+    - Código separado: `SEO.astro`, `SEO.tsx`, `next-sitemap.config.js`, `robots.txt`
+    - Documentación: `SEO.md` (400+ líneas)
+    - Metadata: `plugin.json` con dependencias y configuración
+- 🔐 **Plugin Auth** - Autenticación modular
+    - Código separado: NextAuth routes, middleware, utils para Expo
+    - Documentación: `AUTH.md` (450+ líneas)
+    - Soporte Next.js y Expo
+- 💾 **Plugin Database** - Prisma ORM modular
+    - Código separado: `schema.prisma`, cliente Prisma
+    - Documentación: `DATABASE.md` (500+ líneas)
+    - Soporte Next.js y Astro
+- 📝 **Plugin Content** - MDX y Content Collections
+    - Código separado: config, posts de ejemplo, utilidades MDX
+    - Documentación: `CONTENT.md` (400+ líneas)
+    - Soporte Astro y Next.js
+- 🔐📱 **Plugin Expo Auth** - Auth móvil completo
+    - Código separado: AuthContext, LoginScreen
+    - Documentación: `EXPO-AUTH.md` (350+ líneas)
+    - Solo Expo/React Native
+
+#### Documentación Masiva
+
+- 📚 **~2,800 líneas de documentación** nueva entre todos los plugins
+- 📖 Cada plugin incluye:
+    - Características detalladas
+    - Guía de instalación
+    - Configuración paso a paso
+    - Ejemplos de uso
+    - API Reference
+    - Best Practices
+    - Troubleshooting
+    - Ejemplos avanzados
+    - Recursos externos
+
+#### Archivos de Código Real
+
+- 📦 **22 archivos de código fuente** TypeScript/JavaScript
+- ✅ Syntax highlighting funcionando
+- ✅ Linting automático
+- ✅ Archivos reales (no strings embedidos)
+- ✅ Estructura que refleja destino final en proyectos
+
+#### Sistema de Validación
+
+- 🧪 **Test suite actualizado** - `test-plugin-structure.js`
+- ✅ Valida 7 plugins en nueva estructura
+- ✅ Verifica `plugin.json`, `src/`, y archivos `.md`
+- ✅ 100% de plugins pasando validación
+
+### 🔄 Cambiado
+
+- 🏗️ **Arquitectura de plugins** - De monolítico a modular
+- 📁 **Estructura de carpetas** - Cada plugin en su propia carpeta
+- 📝 **Separación de concerns** - Código, metadata y docs separados
+- 🎯 **plugin.json estandarizado** - Schema consistente entre todos los plugins
+
+### 📊 Estadísticas de Migración
+
+**Antes (v1.5.2):**
+
+- 7 archivos `.plugin.js` monolíticos
+- ~1,500 líneas de código en strings
+- Documentación básica en README
+- 0 archivos de código reales
+
+**Después (v1.5.3):**
+
+- 7 carpetas organizadas
+- 22 archivos de código fuente reales
+- 7 archivos `plugin.json` con metadata
+- 7 documentaciones completas (`.md`)
+- ~2,800 líneas de documentación
+- 100% validado con tests
+
+**Mejoras:**
+
+- 📈 +186% en documentación
+- 📈 100% de código separado
+- 📈 100% de plugins documentados
+- ✅ TypeScript completamente tipado
+- ✅ Estructura escalable
+
+### 📁 Nueva Estructura de Plugin
+
+```
+plugins/
+├── plugin-name/
+│   ├── src/                  # Código fuente
+│   │   ├── components/       # Componentes
+│   │   ├── lib/             # Utilidades
+│   │   ├── app/             # Routes (Next.js)
+│   │   └── config/          # Archivos de config
+│   ├── plugin.json          # Metadata
+│   └── DOCS.md             # Documentación completa
+```
+
+### 🎯 Archivos Creados
+
+#### Código Fuente (22 archivos nuevos)
+
+**SEO Plugin (4 archivos):**
+
+- `plugins/seo/src/components/SEO.astro`
+- `plugins/seo/src/components/SEO.tsx`
+- `plugins/seo/src/config/next-sitemap.config.js`
+- `plugins/seo/src/config/robots.txt`
+
+**Auth Plugin (3 archivos):**
+
+- `plugins/auth/src/app/api/auth/[...nextauth]/route.ts`
+- `plugins/auth/src/app/middleware.ts`
+- `plugins/auth/src/utils/auth.ts`
+
+**Database Plugin (2 archivos):**
+
+- `plugins/database/src/prisma/schema.prisma`
+- `plugins/database/src/lib/prisma.ts`
+
+**Content Plugin (4 archivos):**
+
+- `plugins/content/src/content/config/config.ts`
+- `plugins/content/src/content/blog/primer-post.md`
+- `plugins/content/src/content/posts/primer-post.mdx`
+- `plugins/content/src/lib/mdx.ts`
+
+**Expo Auth Plugin (2 archivos):**
+
+- `plugins/expo-auth/src/context/AuthContext.tsx`
+- `plugins/expo-auth/src/screens/LoginScreen.tsx`
+
+#### Metadata (5 archivos nuevos)
+
+- `plugins/seo/plugin.json`
+- `plugins/auth/plugin.json`
+- `plugins/database/plugin.json`
+- `plugins/content/plugin.json`
+- `plugins/expo-auth/plugin.json`
+
+#### Documentación (5 archivos nuevos)
+
+- `plugins/seo/SEO.md` (400+ líneas)
+- `plugins/auth/AUTH.md` (450+ líneas)
+- `plugins/database/DATABASE.md` (500+ líneas)
+- `plugins/content/CONTENT.md` (400+ líneas)
+- `plugins/expo-auth/EXPO-AUTH.md` (350+ líneas)
+
+#### Documentación General
+
+- `SUMMARY_v1.5.3.md` - Resumen completo de la migración
+- `ARCHITECTURE_v2.md` - Documentación de la nueva arquitectura
+
+### 🧪 Validación
+
+```bash
+$ node test-plugin-structure.js
+
+✅ Todos los plugins validados:
+   - analytics ✅ (desde v1.5.2)
+   - stripe ✅ (desde v1.5.2)
+   - seo ✅ (nuevo en v1.5.3)
+   - auth ✅ (nuevo en v1.5.3)
+   - database ✅ (nuevo en v1.5.3)
+   - content ✅ (nuevo en v1.5.3)
+   - expo-auth ✅ (nuevo en v1.5.3)
+
+Plugins en nueva estructura: 7/7 (100%)
+```
+
+### 🎨 Ventajas de la Nueva Arquitectura
+
+1. **Mantenibilidad**: Cada plugin es independiente y fácil de actualizar
+2. **Escalabilidad**: Agregar nuevos plugins es trivial
+3. **Documentación**: Cada plugin tiene guía completa y detallada
+4. **Testing**: Validación automática de estructura
+5. **TypeScript**: Linting y autocompletado funcionan perfectamente
+6. **Git**: Mejor tracking de cambios por archivo
+7. **Profesional**: Archivos reales vs strings embedidos
+
+### 📚 Documentación Incluida
+
+Cada plugin ahora incluye documentación completa con:
+
+- ✅ Tabla de contenidos
+- ✅ Lista de características
+- ✅ Guía de instalación
+- ✅ Configuración paso a paso
+- ✅ Ejemplos de uso
+- ✅ API Reference completo
+- ✅ Best Practices
+- ✅ Troubleshooting
+- ✅ Ejemplos avanzados
+- ✅ Links a recursos externos
+
+### 🚀 Retrocompatibilidad
+
+- ✅ Archivos `.plugin.js` legacy mantenidos
+- ✅ Sistema antiguo sigue funcionando
+- ✅ Migración no rompe proyectos existentes
+
+### 📈 Progreso Total
+
+| Versión | Plugins Implementados | Estructura Modular | Docs Completas | Archivos Reales |
+| ------- | --------------------- | ------------------ | -------------- | --------------- |
+| v1.5.2  | 7                     | 2                  | 2              | 7               |
+| v1.5.3  | 7                     | 7 ✅               | 7 ✅           | 22 ✅           |
+
+### 🎯 Próximos Pasos (v1.6.0)
+
+- [ ] Actualizar plugin loader para leer nueva estructura
+- [ ] Sistema de copia de archivos desde `src/` al proyecto
+- [ ] Instalación automática de dependencias
+- [ ] CLI commands: `devanthos add <plugin>`
+- [ ] Más plugins: i18n, testing, monitoring, email
+
+---
+
+## [1.5.2] - 2025-01-14
+
+### ✨ Agregado
+
+#### Sistema de Plugins Completo
+
+- 🔌 **7 plugins funcionales** - Plugins completos con código listo para usar
+- 📊 **Plugin Analytics** - Google Analytics y Vercel Analytics
+- 🔍 **Plugin SEO** - Meta tags, sitemap, robots.txt, OpenGraph
+- 🔐 **Plugin Auth** - NextAuth.js para Next.js, Secure Store para Expo
+- 💾 **Plugin Database** - Prisma con modelos de ejemplo
+- 📝 **Plugin Content** - MDX con Content Collections (Astro) o next-mdx-remote (Next)
+- 💳 **Plugin Stripe** - Integración completa de pagos
+- 📱 **Plugin Expo Auth** - Sistema de autenticación móvil
+
+#### Infraestructura de Plugins
+
+- 📦 **`plugins/` directory** - Carpeta con todos los plugins
+- 🔄 **`plugins/index.js`** - Sistema de carga y gestión de plugins
+- 🧪 **`test-plugins.js`** - Suite de tests para plugins
+- 📚 **`plugins/README.md`** - Documentación completa de plugins
+
+#### Características de Plugins
+
+- ⚙️ **Archivos de configuración** - Cada plugin incluye archivos listos para usar
+- 📦 **Dependencias listadas** - Cada plugin especifica sus dependencias
+- 📝 **Instrucciones post-instalación** - Guías paso a paso
+- 🎯 **Variables de entorno** - Lista de env vars necesarias
+- 🔧 **Código funcional** - Ejemplos completos, no solo stubs
+
+### 📚 Documentación
+
+- Agregada documentación completa de plugins en `plugins/README.md`
+- Tests automatizados para validar estructura de plugins
+- Ejemplos de uso para cada plugin
+
+---
+
 ## [1.5.1] - 2025-01-14
 
 ### 🎨 Mejorado
