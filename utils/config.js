@@ -104,6 +104,7 @@ export const PRESETS = {
         },
         plugins: [
             "@devanthos/plugin-stripe",
+            "@devanthos/plugin-mercadopago",
             "@devanthos/plugin-database",
             "@devanthos/plugin-auth"
         ],
