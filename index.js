@@ -2,6 +2,7 @@
 import inquirer from "inquirer";
 import ora from "ora";
 import chalk from "chalk";
+import path from "path";
 import { fileURLToPath } from "url";
 import { Command } from "commander";
 import { readFileSync } from "fs";
@@ -167,16 +168,49 @@ const main = async () => {
                 message: "¿Guardar configuración en devanthos.config.js?",
                 default: false,
                 when: answers => answers.preset !== null // Solo si eligió un preset
+            },
+            {
+                type: "checkbox",
+                name: "selectedPlugins",
+                message: "¿Qué plugins querés instalar?",
+                when: answers => {
+                    if (!answers.preset) return false;
+                    const preset = ProjectConfig.applyPreset(answers.preset);
+                    return preset.plugins && preset.plugins.length > 0;
+                },
+                choices: answers => {
+                    const preset = ProjectConfig.applyPreset(answers.preset);
+                    return preset.plugins.map(pluginName => ({
+                        name: pluginName.replace("@devanthos/plugin-", ""),
+                        value: pluginName,
+                        checked: true // Por defecto todos seleccionados
+                    }));
+                }
             }
         ]);
 
         // Determinar si está usando preset
         const usingPreset = answers.preset !== null;
-        const { framework, projectName, installDependencies, initGit, saveConfig } = answers;
+        const {
+            framework,
+            projectName,
+            installDependencies,
+            initGit,
+            saveConfig,
+            selectedPlugins
+        } = answers;
         let presetConfig = null;
 
         if (usingPreset) {
             presetConfig = ProjectConfig.applyPreset(answers.preset);
+
+            // Sobrescribir plugins con los seleccionados por el usuario
+            if (selectedPlugins && selectedPlugins.length > 0) {
+                presetConfig.plugins = selectedPlugins;
+            } else if (selectedPlugins && selectedPlugins.length === 0) {
+                // Si no seleccionó ninguno, no instalar plugins
+                presetConfig.plugins = [];
+            }
 
             console.log(
                 chalk.cyan(`\n✨ Usando preset: ${chalk.bold(presetConfig._presetMeta.name)}`)
@@ -301,6 +335,54 @@ const main = async () => {
                 }
             } catch (error) {
                 configSpinner.warn(chalk.yellow("⚠️ Error al guardar configuración (no crítico)"));
+            }
+        }
+
+        // Instalar plugins del preset si se definieron
+        if (presetConfig && presetConfig.plugins && presetConfig.plugins.length > 0) {
+            console.log(
+                chalk.cyan(`\n🔌 Instalando ${presetConfig.plugins.length} plugin(s)...\n`)
+            );
+
+            const projectPath = path.resolve(process.cwd(), projectName);
+            let installedCount = 0;
+            let failedCount = 0;
+
+            for (const pluginName of presetConfig.plugins) {
+                const pluginSpinner = ora({
+                    text: `Instalando ${pluginName}...`,
+                    color: "cyan"
+                }).start();
+
+                try {
+                    await pluginManager.installPlugin(pluginName, projectPath, framework, {
+                        verbose: false,
+                        skipDependencies: !installDependencies
+                    });
+                    pluginSpinner.succeed(chalk.green(`✅ ${pluginName} instalado`));
+                    installedCount++;
+                } catch (error) {
+                    pluginSpinner.warn(chalk.yellow(`⚠️ ${pluginName} - ${error.message}`));
+                    failedCount++;
+                }
+            }
+
+            if (installedCount > 0) {
+                console.log(
+                    chalk.green(`\n✅ ${installedCount} plugin(s) instalado(s) exitosamente`)
+                );
+            }
+            if (failedCount > 0) {
+                console.log(
+                    chalk.yellow(
+                        `⚠️ ${failedCount} plugin(s) no se pudieron instalar automáticamente`
+                    )
+                );
+                console.log(
+                    chalk.gray(
+                        "   Podés instalarlos manualmente con: npx devanthos-plugins install"
+                    )
+                );
             }
         }
 
@@ -510,6 +592,56 @@ const createProjectNonInteractive = async (projectName, options) => {
                 }
             } catch (error) {
                 configSpinner.warn(chalk.yellow("⚠️ Error al guardar configuración (no crítico)"));
+            }
+        }
+
+        // Instalar plugins del preset si se definieron
+        if (_presetConfig && _presetConfig.plugins && _presetConfig.plugins.length > 0) {
+            console.log(
+                chalk.cyan(
+                    `\n🔌 Instalando ${_presetConfig.plugins.length} plugin(s) del preset...\n`
+                )
+            );
+
+            const projectPath = path.resolve(process.cwd(), projectName);
+            let installedCount = 0;
+            let failedCount = 0;
+
+            for (const pluginName of _presetConfig.plugins) {
+                const pluginSpinner = ora({
+                    text: `Instalando ${pluginName}...`,
+                    color: "cyan"
+                }).start();
+
+                try {
+                    await pluginManager.installPlugin(pluginName, projectPath, template, {
+                        verbose: false,
+                        skipDependencies: !install
+                    });
+                    pluginSpinner.succeed(chalk.green(`✅ ${pluginName} instalado`));
+                    installedCount++;
+                } catch (error) {
+                    pluginSpinner.warn(chalk.yellow(`⚠️ ${pluginName} - ${error.message}`));
+                    failedCount++;
+                }
+            }
+
+            if (installedCount > 0) {
+                console.log(
+                    chalk.green(`\n✅ ${installedCount} plugin(s) instalado(s) exitosamente`)
+                );
+            }
+            if (failedCount > 0) {
+                console.log(
+                    chalk.yellow(
+                        `⚠️ ${failedCount} plugin(s) no se pudieron instalar automáticamente`
+                    )
+                );
+                console.log(
+                    chalk.gray(
+                        "   Podés instalarlos manualmente con: npx devanthos-plugins install"
+                    )
+                );
             }
         }
 
