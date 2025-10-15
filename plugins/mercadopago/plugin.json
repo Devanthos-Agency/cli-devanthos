@@ -1,0 +1,90 @@
+{
+    "name": "@devanthos/plugin-mercadopago",
+    "version": "1.0.0",
+    "description": "Plugin de integración completa con Mercado Pago para pagos en Latinoamérica",
+    "author": "Devanthos",
+    "license": "MIT",
+    "frameworks": ["next"],
+    "dependencies": {
+        "next": {
+            "mercadopago": "^2.0.0"
+        }
+    },
+    "devDependencies": {},
+    "envVars": ["MERCADOPAGO_ACCESS_TOKEN", "NEXT_PUBLIC_APP_URL", "MERCADOPAGO_PUBLIC_KEY"],
+    "files": [
+        {
+            "framework": "next",
+            "source": "src/lib/mercadopago.ts",
+            "destination": "lib/mercadopago.ts"
+        },
+        {
+            "framework": "next",
+            "source": "src/app/api/mercadopago/checkout/route.ts",
+            "destination": "app/api/mercadopago/checkout/route.ts"
+        },
+        {
+            "framework": "next",
+            "source": "src/app/api/mercadopago/webhook/route.ts",
+            "destination": "app/api/mercadopago/webhook/route.ts"
+        },
+        {
+            "framework": "next",
+            "source": "src/components/CheckoutButton.tsx",
+            "destination": "components/mercadopago/CheckoutButton.tsx"
+        },
+        {
+            "framework": "next",
+            "source": "src/components/ProductCard.tsx",
+            "destination": "components/mercadopago/ProductCard.tsx"
+        }
+    ],
+    "postInstall": {
+        "message": "💳 Mercado Pago configurado exitosamente.",
+        "instructions": [
+            "1. Crea una cuenta en Mercado Pago Developers: https://www.mercadopago.com.ar/developers",
+            "2. Crea una aplicación y obtén tus credenciales",
+            "3. Configura las variables de entorno en .env:",
+            "   MERCADOPAGO_ACCESS_TOKEN=tu_access_token_aqui",
+            "   NEXT_PUBLIC_APP_URL=http://localhost:3000",
+            "   MERCADOPAGO_PUBLIC_KEY=tu_public_key_aqui",
+            "",
+            "4. Para testing usa credenciales de prueba (Test credentials)",
+            "5. Configura el webhook en tu aplicación de Mercado Pago:",
+            "   URL: https://tu-dominio.com/api/mercadopago/webhook",
+            "",
+            "6. Uso básico:",
+            "   import { CheckoutButton } from '@/components/mercadopago/CheckoutButton';",
+            "   ",
+            "   <CheckoutButton",
+            "     items={[{",
+            "       title: 'Producto',",
+            "       quantity: 1,",
+            "       unit_price: 1000",
+            "     }]}",
+            "   />",
+            "",
+            "7. Docs: https://www.mercadopago.com.ar/developers/es/docs"
+        ]
+    },
+    "features": [
+        "Checkout completo con Mercado Pago",
+        "Webhook para notificaciones IPN",
+        "Soporte para múltiples métodos de pago",
+        "Componentes React listos para usar",
+        "TypeScript completamente tipado",
+        "Manejo de estados de pago",
+        "Soporte para testing con credenciales de prueba",
+        "Compatible con todos los países de Latinoamérica"
+    ],
+    "countries": [
+        "Argentina",
+        "Brasil",
+        "Chile",
+        "Colombia",
+        "México",
+        "Perú",
+        "Uruguay",
+        "Venezuela"
+    ]
+}
