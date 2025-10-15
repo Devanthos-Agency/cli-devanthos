@@ -27,6 +27,8 @@ _Plantillas profesionales, optimizadas y listas para producción_ ✨
 - 🆕 **Git Auto-Init** - Inicialización automática de repositorio Git con commit inicial
 - 🆕 **Presets** - Configuraciones predefinidas para casos de uso comunes
 - 🆕 **Config File** - Guarda y reutiliza configuraciones con `devanthos.config.js`
+- ✨ **Sistema de Plugins v2.0** - 8 plugins modulares disponibles (Analytics, Auth, Database, Content, SEO, Stripe, Expo Auth, Mercado Pago)
+- 🔌 **Plugin Installer** - Instala plugins en proyectos existentes con un comando
 
 ---
 
@@ -50,10 +52,11 @@ El asistente te guiará paso a paso:
 1. **Selecciona el framework** (Astro, Next.js o Expo)
 2. **Elige configuración** (preset o manual)
 3. **Nombra tu proyecto**
-4. **Confirma instalación automática**
-5. **Inicializa Git** (opcional)
-6. **Guarda configuración** (opcional, solo si usas preset)
-7. **¡Listo!** 🎉
+4. **Selecciona plugins** (si el preset incluye plugins, puedes elegir cuáles instalar)
+5. **Confirma instalación automática**
+6. **Inicializa Git** (opcional)
+7. **Guarda configuración** (opcional, solo si usas preset)
+8. **¡Listo!** 🎉
 
 ### Modo No-Interactivo (CLI Flags) 🆕
 
@@ -244,60 +247,104 @@ El CLI detecta automáticamente el mejor gestor disponible:
 
 ---
 
-## � Sistema de Plugins
+## 🔌 Sistema de Plugins v2.0
 
-Devanthos CLI incluye un **sistema de plugins extensible** que te permite personalizar el comportamiento del CLI.
+Devanthos CLI incluye un **sistema modular de plugins** con 8 plugins listos para usar.
 
-### Plugin Integrado: Actualización de Dependencias
+### 📦 Plugins Disponibles
 
-**🎯 Funcionalidad principal:**
+| Plugin              | Framework      | Descripción                         |
+| ------------------- | -------------- | ----------------------------------- |
+| 📊 **Analytics**    | Astro, Next.js | Google Analytics + Vercel Analytics |
+| 🔐 **Auth**         | Next.js, Expo  | NextAuth.js + Expo Authentication   |
+| 🗄️ **Database**     | Next.js, Astro | Prisma ORM + Schema                 |
+| 📝 **Content**      | Astro, Next.js | MDX + Content Collections           |
+| 🔍 **SEO**          | Astro, Next.js | Meta tags + Sitemap + robots.txt    |
+| 💳 **Stripe**       | Next.js        | Stripe Checkout + Webhooks          |
+| 📱 **Expo Auth**    | Expo           | AuthContext + Login Screens         |
+| 💰 **Mercado Pago** | Next.js        | Pagos LATAM (8 países)              |
 
-- ✅ Actualiza automáticamente las dependencias a las últimas versiones
-- ✅ Consulta npm registry en tiempo real
-- ✅ Soporta Astro, Next.js y Expo
-- ✅ Actualiza tanto `dependencies` como `devDependencies`
-- ✅ Preserva compatibilidad con prefijo `^`
-- ✅ Auditoría de seguridad opcional
+### 🚀 Instalar Plugins
 
-**Variables de control:**
+**Modo Interactivo:**
 
 ```bash
-# Desactivar actualizaciones (default: true)
-export DEVANTHOS_UPDATE_DEPS=false
-
-# Habilitar auditoría de seguridad (default: false)
-export DEVANTHOS_AUDIT=true
-
-# Mostrar detalles de actualizaciones (default: false)
-export DEVANTHOS_VERBOSE=true
+cd mi-proyecto
+npx devanthos-plugins install
 ```
 
-### Crear tu propio plugin
+**Modo CLI:**
 
-Crea un archivo `mi-plugin.plugin.js`:
+```bash
+# Instalar plugin específico
+npx devanthos-plugins install @devanthos/plugin-stripe
 
-```javascript
-export default {
-    name: "mi-plugin",
-    version: "1.0.0",
-    description: "Mi plugin personalizado",
+# Especificar framework
+npx devanthos-plugins install @devanthos/plugin-analytics --framework next
 
-    async afterClone(context) {
-        console.log(`Proyecto ${context.projectName} clonado!`);
-        return context;
-    }
-};
+# Saltar dependencias
+npx devanthos-plugins install @devanthos/plugin-auth --skip-deps
 ```
 
-### Ubicaciones de plugins
+**Listar plugins:**
 
-Los plugins se cargan automáticamente desde:
+```bash
+# Todos los plugins
+npx devanthos-plugins list
 
-1. `./devanthos.plugins.js` (directorio actual)
-2. `./.devanthos/plugins/` (proyecto)
-3. `~/.devanthos/plugins/` (global/usuario)
+# Por framework
+npx devanthos-plugins list --framework next
+npx devanthos-plugins list --framework astro
+npx devanthos-plugins list --framework expo
+```
 
-📚 **Ver ejemplos completos:** [examples/README.md](./examples/README.md)
+### ✨ Características del Sistema
+
+- ✅ **Estructura modular** - Plugins autocontenidos con `plugin.json`
+- ✅ **Auto-instalación** - Copia archivos e instala dependencias automáticamente
+- ✅ **Multi-framework** - Soporte para Next.js, Astro y Expo
+- ✅ **Documentación integrada** - Cada plugin incluye docs completas
+- ✅ **TypeScript** - Completamente tipado
+- ✅ **Compatibilidad** - Funciona con plugins legacy (`.plugin.js`)
+
+📚 **Documentación completa:** [plugins/README_PLUGIN_SYSTEM.md](./plugins/README_PLUGIN_SYSTEM.md)
+
+### Crear tu Propio Plugin
+
+Estructura básica:
+
+```
+plugins/
+└── mi-plugin/
+    ├── plugin.json          # Metadata
+    ├── MI-PLUGIN.md         # Documentación
+    └── src/                 # Código fuente
+        ├── components/
+        ├── lib/
+        └── ...
+```
+
+**plugin.json:**
+
+```json
+{
+    "name": "@devanthos/plugin-mi-plugin",
+    "version": "1.0.0",
+    "description": "Mi plugin",
+    "frameworks": ["next"],
+    "dependencies": {
+        "next": {
+            "mi-dependencia": "^1.0.0"
+        }
+    },
+    "files": [
+        {
+            "source": "src/components/MiComponente.tsx",
+            "destination": "components/MiComponente.tsx"
+        }
+    ]
+}
+```
 
 ---
 
