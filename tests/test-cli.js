@@ -30,8 +30,8 @@ if (gitInstalled) {
     } else {
         console.log(chalk.yellow("⚠️ Git no está configurado completamente"));
         console.log(chalk.gray("   Configura Git con:"));
-        console.log(chalk.gray('   git config --global user.name "Tu Nombre"'));
-        console.log(chalk.gray('   git config --global user.email "tu@email.com"\n'));
+        console.log(chalk.gray("   git config --global user.name \"Tu Nombre\""));
+        console.log(chalk.gray("   git config --global user.email \"tu@email.com\"\n"));
     }
 }
 
