@@ -1,22 +1,30 @@
-import degit from "degit";
-import { existsSync, mkdirSync, rmSync } from "fs";
+import { existsSync, mkdirSync, rmSync, readdirSync, statSync, copyFileSync } from "fs";
 import path from "path";
 import chalk from "chalk";
+import { fileURLToPath } from "url";
 
-// Configuración de plantillas (actualizar con tus repositorios reales)
+// Obtener la ruta del CLI
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const CLI_ROOT = path.resolve(__dirname, "..");
+
+// Configuración de plantillas locales
 const TEMPLATES = {
     astro: {
-        repo: "Devanthos-Agency/astro-template-devanthos",
+        templatePath: path.join(CLI_ROOT, "templates", "astro-template-devanthos", "www"),
+        extrasPath: path.join(CLI_ROOT, "templates", "astro-template-devanthos", "extras"),
         description:
             "Plantilla moderna de Astro con TypeScript, Tailwind CSS y componentes optimizados"
     },
     next: {
-        repo: "Devanthos-Agency/next-template-devanthos",
+        templatePath: path.join(CLI_ROOT, "templates", "next-template-devanthos", "www"),
+        extrasPath: path.join(CLI_ROOT, "templates", "next-template-devanthos", "extras"),
         description:
             "Plantilla de Next.js con App Router, TypeScript, Tailwind CSS y mejores prácticas"
     },
     expo: {
-        repo: "Devanthos-Agency/expo-template-devanthos",
+        templatePath: path.join(CLI_ROOT, "templates", "expo-template-devanthos", "www"),
+        extrasPath: path.join(CLI_ROOT, "templates", "expo-template-devanthos", "extras"),
         description:
             "Plantilla de Expo con React Native, TypeScript, NativeWind y navegación configurada"
     }
@@ -27,7 +35,7 @@ const validateDirectory = projectName => {
     const projectPath = path.resolve(process.cwd(), projectName);
 
     if (existsSync(projectPath)) {
-        const files = require("fs").readdirSync(projectPath);
+        const files = readdirSync(projectPath);
         if (files.length > 0) {
             throw new Error(`❌ El directorio "${projectName}" ya existe y no está vacío.
                 
@@ -52,7 +60,7 @@ const cleanupOnError = projectPath => {
     }
 };
 
-// Función principal de clonado
+// Función principal de copia de plantilla local
 export async function cloneTemplate(framework, projectName) {
     if (!TEMPLATES[framework]) {
         throw new Error(`❌ Framework "${framework}" no soportado.
@@ -63,59 +71,40 @@ export async function cloneTemplate(framework, projectName) {
     const template = TEMPLATES[framework];
     const projectPath = validateDirectory(projectName);
 
+    // Verificar que la plantilla local existe
+    if (!existsSync(template.templatePath)) {
+        throw new Error(`❌ La plantilla local no existe en: ${template.templatePath}
+        
+        🔍 Verifica que el CLI esté instalado correctamente con todas las plantillas.`);
+    }
+
     try {
         // Crear directorio del proyecto
         if (!existsSync(projectPath)) {
             mkdirSync(projectPath, { recursive: true });
         }
 
-        // Configurar degit con opciones mejoradas
-        const emitter = degit(template.repo, {
-            cache: false,
-            force: true,
-            verbose: process.env.NODE_ENV === "development"
-        });
+        // Copiar la plantilla desde templates/{framework}/www
+        copyRecursiveSync(template.templatePath, projectPath);
 
-        // Event listeners para degit (opcional, para debugging)
-        emitter.on("info", info => {
-            if (process.env.NODE_ENV === "development") {
-                console.log(chalk.gray(`ℹ️ ${info.message}`));
-            }
-        });
-
-        emitter.on("warn", warning => {
-            console.warn(chalk.yellow(`⚠️ ${warning.message}`));
-        });
-
-        // Clonar el repositorio
-        await emitter.clone(projectPath);
-
-        // Verificar que la clonación fue exitosa
+        // Verificar que la copia fue exitosa
         if (!existsSync(path.join(projectPath, "package.json"))) {
-            throw new Error(`❌ La plantilla clonada no parece ser válida (falta package.json).
+            throw new Error(`❌ La plantilla copiada no parece ser válida (falta package.json).
                 
-🔍          Verifica que el repositorio ${template.repo} existe y es accesible.`);
+            🔍 Verifica la estructura de la plantilla en: ${template.templatePath}`);
         }
 
         return {
             success: true,
             path: projectPath,
-            template: template.description
+            template: template.description,
+            extrasPath: template.extrasPath
         };
     } catch (error) {
         // Limpiar en caso de error
         cleanupOnError(projectPath);
 
         // Mejorar mensaje de error según el tipo
-        if (error.message.includes("not found")) {
-            throw new Error(`❌ No se encontró la plantilla "${template.repo}".
-                
-            🔍 Verifica que:
-            • El repositorio existe en GitHub
-            • Tienes acceso de lectura
-            • Tu conexión a internet funciona`);
-        }
-
         if (error.message.includes("EACCES") || error.message.includes("permission")) {
             throw new Error(`❌ Error de permisos al crear el directorio.
                 
@@ -132,10 +121,28 @@ export async function cloneTemplate(framework, projectName) {
         }
 
         // Error genérico mejorado
-        throw new Error(`❌ Error al clonar la plantilla: ${error.message}
+        throw new Error(`❌ Error al copiar la plantilla: ${error.message}
     
         🆘 Si el problema persiste, reporta el issue en:
         https://github.com/devanthos/create-devanthos-app/issues`);
+    }
+}
+
+// Función auxiliar para copiar recursivamente
+function copyRecursiveSync(src, dest) {
+    const exists = existsSync(src);
+    const stats = exists && statSync(src);
+    const isDirectory = exists && stats.isDirectory();
+
+    if (isDirectory) {
+        if (!existsSync(dest)) {
+            mkdirSync(dest, { recursive: true });
+        }
+        readdirSync(src).forEach(childItemName => {
+            copyRecursiveSync(path.join(src, childItemName), path.join(dest, childItemName));
+        });
+    } else {
+        copyFileSync(src, dest);
     }
 }
 
@@ -143,7 +150,9 @@ export async function cloneTemplate(framework, projectName) {
 export function getAvailableTemplates() {
     return Object.entries(TEMPLATES).map(([key, template]) => ({
         framework: key,
-        repo: template.repo,
-        description: template.description
+        templatePath: template.templatePath,
+        extrasPath: template.extrasPath,
+        description: template.description,
+        available: existsSync(template.templatePath)
     }));
 }
