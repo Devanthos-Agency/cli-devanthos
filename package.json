@@ -1,8 +1,8 @@
 {
     "name": "create-devanthos-app",
-    "version": "1.6.0",
+    "version": "2.0.0",
     "type": "module",
-    "description": "CLI oficial para crear proyectos con las plantillas modernas Devanthos (Astro, Next.js, Expo y más) - Con sistema de plugins, actualizaciones automáticas, CLI flags, Git auto-init, presets y configuración personalizable.",
+    "description": "CLI oficial para crear proyectos con las plantillas modernas Devanthos (Astro, Next.js, Expo y más) - Con sistema de plugins, actualizaciones automáticas, CLI flags, Git auto-init, presets y configuración personalizable. Versión 2.0: Plantillas locales y sistema de extras.",
     "homepage": "https://devanthos.com",
     "repository": {
         "type": "git",
@@ -19,7 +19,7 @@
         "index.js",
         "plugin-installer.js",
         "utils/",
-        "plugins/",
+        "templates/",
         "README.md"
     ],
     "keywords": [
@@ -42,7 +42,8 @@
         "plugins",
         "extensible",
         "auto-update",
-        "dependency-update"
+        "dependency-update",
+        "local-templates"
     ],
     "author": {
         "name": "Devanthos",
@@ -55,7 +56,6 @@
     "dependencies": {
         "chalk": "^5.3.0",
         "commander": "^14.0.1",
-        "degit": "^2.8.4",
         "inquirer": "^9.2.12",
         "ora": "^7.0.1"
     },
