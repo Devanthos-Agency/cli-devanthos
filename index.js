@@ -2,13 +2,11 @@
 import inquirer from "inquirer";
 import ora from "ora";
 import chalk from "chalk";
-import path from "path";
 import { fileURLToPath } from "url";
 import { Command } from "commander";
 import { readFileSync } from "fs";
 import { cloneTemplate } from "./utils/clone.js";
 import { installDeps } from "./utils/install.js";
-import { pluginManager } from "./utils/plugins.js";
 import { checkForUpdates } from "./utils/update.js";
 import { initGitRepo, isGitInstalled } from "./utils/git.js";
 import { ProjectConfig, PRESETS } from "./utils/config.js";
@@ -75,21 +73,6 @@ const main = async () => {
             // Ignorar errores silenciosamente
         });
 
-        // Cargar plugin de actualización de dependencias
-        const pluginPath = new URL("./utils/dependency-updater.plugin.js", import.meta.url)
-            .pathname;
-        const cleanPluginPath =
-            process.platform === "win32" && pluginPath.startsWith("/")
-                ? pluginPath.substring(1)
-                : pluginPath;
-        await pluginManager.loadPlugin(cleanPluginPath);
-
-        // Descubrir y cargar plugins adicionales
-        const pluginCount = await pluginManager.discoverPlugins();
-        if (pluginCount > 1) {
-            console.log(chalk.gray(`🔌 ${pluginCount} plugin(s) cargado(s)\n`));
-        }
-
         console.log(chalk.cyan("¡Bienvenido al generador de plantillas Devanthos! 👋\n"));
 
         const answers = await inquirer.prompt([
@@ -113,35 +96,6 @@ const main = async () => {
                 ]
             },
             {
-                type: "list",
-                name: "preset",
-                message: "Seleccioná una configuración:",
-                choices: answers => {
-                    // Filtrar presets por framework seleccionado
-                    const presetsForFramework = ProjectConfig.listPresets().filter(
-                        preset => preset.framework === answers.framework
-                    );
-
-                    // Agregar opción de configuración manual al inicio
-                    const choices = [
-                        {
-                            name: "⚙️ Configuración manual (sin preset)",
-                            value: null
-                        }
-                    ];
-
-                    // Agregar presets disponibles
-                    presetsForFramework.forEach(preset => {
-                        choices.push({
-                            name: `${preset.name} - ${preset.description}`,
-                            value: preset.id
-                        });
-                    });
-
-                    return choices;
-                }
-            },
-            {
                 type: "input",
                 name: "projectName",
                 message: "¿Cuál será el nombre de tu proyecto?",
@@ -161,62 +115,10 @@ const main = async () => {
                 message: "¿Inicializar repositorio Git?",
                 default: true,
                 when: () => isGitInstalled()
-            },
-            {
-                type: "confirm",
-                name: "saveConfig",
-                message: "¿Guardar configuración en devanthos.config.js?",
-                default: false,
-                when: answers => answers.preset !== null // Solo si eligió un preset
-            },
-            {
-                type: "checkbox",
-                name: "selectedPlugins",
-                message: "¿Qué plugins querés instalar?",
-                when: answers => {
-                    if (!answers.preset) return false;
-                    const preset = ProjectConfig.applyPreset(answers.preset);
-                    return preset.plugins && preset.plugins.length > 0;
-                },
-                choices: answers => {
-                    const preset = ProjectConfig.applyPreset(answers.preset);
-                    return preset.plugins.map(pluginName => ({
-                        name: pluginName.replace("@devanthos/plugin-", ""),
-                        value: pluginName,
-                        checked: true // Por defecto todos seleccionados
-                    }));
-                }
             }
         ]);
 
-        // Determinar si está usando preset
-        const usingPreset = answers.preset !== null;
-        const {
-            framework,
-            projectName,
-            installDependencies,
-            initGit,
-            saveConfig,
-            selectedPlugins
-        } = answers;
-        let presetConfig = null;
-
-        if (usingPreset) {
-            presetConfig = ProjectConfig.applyPreset(answers.preset);
-
-            // Sobrescribir plugins con los seleccionados por el usuario
-            if (selectedPlugins && selectedPlugins.length > 0) {
-                presetConfig.plugins = selectedPlugins;
-            } else if (selectedPlugins && selectedPlugins.length === 0) {
-                // Si no seleccionó ninguno, no instalar plugins
-                presetConfig.plugins = [];
-            }
-
-            console.log(
-                chalk.cyan(`\n✨ Usando preset: ${chalk.bold(presetConfig._presetMeta.name)}`)
-            );
-            console.log(chalk.gray(`   ${presetConfig._presetMeta.description}\n`));
-        }
+        const { framework, projectName, installDependencies, initGit } = answers;
 
         const frameworkNames = {
             astro: "Astro",
@@ -224,37 +126,23 @@ const main = async () => {
             expo: "Expo"
         };
 
-        // Hook: beforeClone
-        await pluginManager.executeHook("beforeClone", { framework, projectName });
-
         console.log(
             chalk.cyan(
                 `\n📁 Creando proyecto "${projectName}" con ${frameworkNames[framework]}...\n`
             )
         );
 
-        // Clonar plantilla
+        // Clonar plantilla (copiar desde templates local)
         const cloneSpinner = ora({
-            text: `Descargando plantilla ${framework}...`,
+            text: `Copiando plantilla ${framework}...`,
             color: "cyan"
         }).start();
 
         try {
             await cloneTemplate(framework, projectName);
-            cloneSpinner.succeed(chalk.green("✅ Plantilla descargada exitosamente"));
-
-            // Hook: afterClone (aquí el plugin actualizará las dependencias)
-            await pluginManager.executeHook("afterClone", { framework, projectName });
+            cloneSpinner.succeed(chalk.green("✅ Plantilla copiada exitosamente"));
         } catch (error) {
-            cloneSpinner.fail(chalk.red("❌ Error al descargar la plantilla"));
-
-            // Hook: onError
-            await pluginManager.executeHook("onError", {
-                error,
-                stage: "clone",
-                framework,
-                projectName
-            });
+            cloneSpinner.fail(chalk.red("❌ Error al copiar la plantilla"));
             throw error;
         }
 
@@ -284,9 +172,6 @@ const main = async () => {
 
         // Instalar dependencias si se solicita
         if (installDependencies) {
-            // Hook: beforeInstall
-            await pluginManager.executeHook("beforeInstall", { projectName });
-
             console.log(chalk.cyan("\n📦 Instalando dependencias...\n"));
 
             const installSpinner = ora({
@@ -297,91 +182,12 @@ const main = async () => {
             try {
                 await installDeps(projectName);
                 installSpinner.succeed(chalk.green("✅ Dependencias instaladas correctamente"));
-
-                // Hook: afterInstall
-                await pluginManager.executeHook("afterInstall", { projectName });
             } catch (error) {
                 installSpinner.warn(
                     chalk.yellow("⚠️ Hubo un problema con la instalación automática")
                 );
                 console.log(
                     chalk.gray(`Podés instalar manualmente con: cd ${projectName} && npm install`)
-                );
-
-                // Hook: onError
-                await pluginManager.executeHook("onError", {
-                    error,
-                    stage: "install",
-                    projectName
-                });
-            }
-        }
-
-        // Guardar configuración si se solicitó
-        if (saveConfig && presetConfig) {
-            const configSpinner = ora({
-                text: "Guardando configuración...",
-                color: "cyan"
-            }).start();
-
-            try {
-                const configResult = ProjectConfig.save(projectName, presetConfig);
-                if (configResult.success) {
-                    configSpinner.succeed(
-                        chalk.green("✅ Configuración guardada en devanthos.config.js")
-                    );
-                } else {
-                    configSpinner.warn(chalk.yellow("⚠️ No se pudo guardar la configuración"));
-                }
-            } catch (error) {
-                configSpinner.warn(chalk.yellow("⚠️ Error al guardar configuración (no crítico)"));
-            }
-        }
-
-        // Instalar plugins del preset si se definieron
-        if (presetConfig && presetConfig.plugins && presetConfig.plugins.length > 0) {
-            console.log(
-                chalk.cyan(`\n🔌 Instalando ${presetConfig.plugins.length} plugin(s)...\n`)
-            );
-
-            const projectPath = path.resolve(process.cwd(), projectName);
-            let installedCount = 0;
-            let failedCount = 0;
-
-            for (const pluginName of presetConfig.plugins) {
-                const pluginSpinner = ora({
-                    text: `Instalando ${pluginName}...`,
-                    color: "cyan"
-                }).start();
-
-                try {
-                    await pluginManager.installPlugin(pluginName, projectPath, framework, {
-                        verbose: false,
-                        skipDependencies: !installDependencies
-                    });
-                    pluginSpinner.succeed(chalk.green(`✅ ${pluginName} instalado`));
-                    installedCount++;
-                } catch (error) {
-                    pluginSpinner.warn(chalk.yellow(`⚠️ ${pluginName} - ${error.message}`));
-                    failedCount++;
-                }
-            }
-
-            if (installedCount > 0) {
-                console.log(
-                    chalk.green(`\n✅ ${installedCount} plugin(s) instalado(s) exitosamente`)
-                );
-            }
-            if (failedCount > 0) {
-                console.log(
-                    chalk.yellow(
-                        `⚠️ ${failedCount} plugin(s) no se pudieron instalar automáticamente`
-                    )
-                );
-                console.log(
-                    chalk.gray(
-                        "   Podés instalarlos manualmente con: npx devanthos-plugins install"
-                    )
                 );
             }
         }
@@ -403,13 +209,6 @@ const main = async () => {
         console.log(chalk.gray("   Documentación: https://docs.devanthos.com"));
         console.log(chalk.gray("   Soporte: https://discord.gg/devanthos\n"));
 
-        // Hook: onComplete
-        await pluginManager.executeHook("onComplete", {
-            framework,
-            projectName,
-            installDependencies
-        });
-
         // Forzar salida exitosa después de un breve delay
         setTimeout(() => {
             process.exit(0);
@@ -420,12 +219,6 @@ const main = async () => {
         console.log(chalk.gray("\n💡 Si el problema persiste, reportalo en:"));
         console.log(chalk.cyan("   https://github.com/devanthos/create-devanthos-app/issues\n"));
 
-        // Hook: onError
-        await pluginManager.executeHook("onError", {
-            error,
-            stage: "main"
-        });
-
         process.exit(1);
     }
 };
@@ -433,15 +226,7 @@ const main = async () => {
 // Función para crear proyecto en modo no-interactivo (CLI flags)
 const createProjectNonInteractive = async (projectName, options) => {
     try {
-        const {
-            template,
-            install = true,
-            git = true,
-            skipUpdateCheck = false,
-            saveConfig = false,
-            _preset,
-            _presetConfig
-        } = options;
+        const { template, install = true, git = true, skipUpdateCheck = false } = options;
 
         // Validar template
         const validTemplates = ["astro", "next", "expo"];
@@ -463,28 +248,10 @@ const createProjectNonInteractive = async (projectName, options) => {
 
         showBanner();
 
-        // Mostrar preset si se está usando
-        if (_preset && _presetConfig) {
-            console.log(
-                chalk.cyan(`\n✨ Usando preset: ${chalk.bold(_presetConfig._presetMeta.name)}`)
-            );
-            console.log(chalk.gray(`   ${_presetConfig._presetMeta.description}\n`));
-        }
-
         // Chequear actualizaciones si no se saltea
         if (!skipUpdateCheck) {
             await checkForUpdates({ silent: true }).catch(() => {});
         }
-
-        // Cargar plugins
-        const pluginPath = new URL("./utils/dependency-updater.plugin.js", import.meta.url)
-            .pathname;
-        const cleanPluginPath =
-            process.platform === "win32" && pluginPath.startsWith("/")
-                ? pluginPath.substring(1)
-                : pluginPath;
-        await pluginManager.loadPlugin(cleanPluginPath);
-        await pluginManager.discoverPlugins();
 
         const frameworkNames = {
             astro: "Astro",
@@ -498,29 +265,17 @@ const createProjectNonInteractive = async (projectName, options) => {
             )
         );
 
-        // Hook: beforeClone
-        await pluginManager.executeHook("beforeClone", {
-            framework: template,
-            projectName
-        });
-
-        // Clonar plantilla
+        // Clonar plantilla (copiar desde templates local)
         const cloneSpinner = ora({
-            text: `Descargando plantilla ${template}...`,
+            text: `Copiando plantilla ${template}...`,
             color: "cyan"
         }).start();
 
         try {
             await cloneTemplate(template, projectName);
-            cloneSpinner.succeed(chalk.green("✅ Plantilla descargada exitosamente"));
-
-            // Hook: afterClone
-            await pluginManager.executeHook("afterClone", {
-                framework: template,
-                projectName
-            });
+            cloneSpinner.succeed(chalk.green("✅ Plantilla copiada exitosamente"));
         } catch (error) {
-            cloneSpinner.fail(chalk.red("❌ Error al descargar la plantilla"));
+            cloneSpinner.fail(chalk.red("❌ Error al copiar la plantilla"));
             throw error;
         }
 
@@ -550,8 +305,6 @@ const createProjectNonInteractive = async (projectName, options) => {
 
         // Instalar dependencias si está habilitado
         if (install) {
-            await pluginManager.executeHook("beforeInstall", { projectName });
-
             console.log(chalk.cyan("\n📦 Instalando dependencias...\n"));
 
             const installSpinner = ora({
@@ -562,85 +315,12 @@ const createProjectNonInteractive = async (projectName, options) => {
             try {
                 await installDeps(projectName);
                 installSpinner.succeed(chalk.green("✅ Dependencias instaladas correctamente"));
-
-                await pluginManager.executeHook("afterInstall", { projectName });
             } catch (error) {
                 installSpinner.warn(
                     chalk.yellow("⚠️ Hubo un problema con la instalación automática")
                 );
                 console.log(
                     chalk.gray(`Podés instalar manualmente con: cd ${projectName} && npm install`)
-                );
-            }
-        }
-
-        // Guardar configuración si se solicitó
-        if (saveConfig && _presetConfig) {
-            const configSpinner = ora({
-                text: "Guardando configuración...",
-                color: "cyan"
-            }).start();
-
-            try {
-                const configResult = ProjectConfig.save(projectName, _presetConfig);
-                if (configResult.success) {
-                    configSpinner.succeed(
-                        chalk.green("✅ Configuración guardada en devanthos.config.js")
-                    );
-                } else {
-                    configSpinner.warn(chalk.yellow("⚠️ No se pudo guardar la configuración"));
-                }
-            } catch (error) {
-                configSpinner.warn(chalk.yellow("⚠️ Error al guardar configuración (no crítico)"));
-            }
-        }
-
-        // Instalar plugins del preset si se definieron
-        if (_presetConfig && _presetConfig.plugins && _presetConfig.plugins.length > 0) {
-            console.log(
-                chalk.cyan(
-                    `\n🔌 Instalando ${_presetConfig.plugins.length} plugin(s) del preset...\n`
-                )
-            );
-
-            const projectPath = path.resolve(process.cwd(), projectName);
-            let installedCount = 0;
-            let failedCount = 0;
-
-            for (const pluginName of _presetConfig.plugins) {
-                const pluginSpinner = ora({
-                    text: `Instalando ${pluginName}...`,
-                    color: "cyan"
-                }).start();
-
-                try {
-                    await pluginManager.installPlugin(pluginName, projectPath, template, {
-                        verbose: false,
-                        skipDependencies: !install
-                    });
-                    pluginSpinner.succeed(chalk.green(`✅ ${pluginName} instalado`));
-                    installedCount++;
-                } catch (error) {
-                    pluginSpinner.warn(chalk.yellow(`⚠️ ${pluginName} - ${error.message}`));
-                    failedCount++;
-                }
-            }
-
-            if (installedCount > 0) {
-                console.log(
-                    chalk.green(`\n✅ ${installedCount} plugin(s) instalado(s) exitosamente`)
-                );
-            }
-            if (failedCount > 0) {
-                console.log(
-                    chalk.yellow(
-                        `⚠️ ${failedCount} plugin(s) no se pudieron instalar automáticamente`
-                    )
-                );
-                console.log(
-                    chalk.gray(
-                        "   Podés instalarlos manualmente con: npx devanthos-plugins install"
-                    )
                 );
             }
         }
@@ -658,13 +338,6 @@ const createProjectNonInteractive = async (projectName, options) => {
         console.log(chalk.gray("   npm run dev  # o pnpm dev"));
 
         console.log(chalk.magenta.bold("\n🚀 ¡Gracias por usar Devanthos! 💜\n"));
-
-        // Hook: onComplete
-        await pluginManager.executeHook("onComplete", {
-            framework: template,
-            projectName,
-            installDependencies: install
-        });
 
         process.exit(0);
     } catch (error) {
