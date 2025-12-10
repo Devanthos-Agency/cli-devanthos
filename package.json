@@ -12,12 +12,10 @@
         "url": "https://github.com/devanthos/create-devanthos-app/issues"
     },
     "bin": {
-        "create-devanthos-app": "./index.js",
-        "devanthos-plugins": "./plugin-installer.js"
+        "create-devanthos-app": "./index.js"
     },
     "files": [
         "index.js",
-        "plugin-installer.js",
         "utils/",
         "templates/",
         "README.md"

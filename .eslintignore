@@ -1,0 +1,13 @@
+# Ignorar templates (son proyectos independientes)
+templates/
+
+# Ignorar node_modules
+node_modules/
+
+# Ignorar archivos de build
+dist/
+build/
+
+# Ignorar archivos de cache
+.cache/
+*.log
