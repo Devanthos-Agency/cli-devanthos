@@ -2,6 +2,7 @@
 import inquirer from "inquirer";
 import ora from "ora";
 import chalk from "chalk";
+import path from "path";
 import { fileURLToPath } from "url";
 import { Command } from "commander";
 import { readFileSync } from "fs";
@@ -10,6 +11,14 @@ import { installDeps } from "./utils/install.js";
 import { checkForUpdates } from "./utils/update.js";
 import { initGitRepo, isGitInstalled } from "./utils/git.js";
 import { ProjectConfig, PRESETS } from "./utils/config.js";
+import {
+    parseIntegrations,
+    validateIntegrations,
+    copyIntegration,
+    appendEnvVars,
+    listIntegrations,
+    getAvailableIntegrations
+} from "./utils/integrations.js";
 
 // Obtener versión del package.json
 const __filename = fileURLToPath(import.meta.url);
@@ -104,6 +113,23 @@ const main = async () => {
                 filter: input => input.trim().toLowerCase()
             },
             {
+                type: "checkbox",
+                name: "selectedIntegrations",
+                message: "¿Qué integraciones querés agregar?",
+                choices: answers => {
+                    const available = getAvailableIntegrations(answers.framework);
+                    return available.map(i => ({
+                        name: `${i.name} - ${i.description}`,
+                        value: i.id,
+                        short: i.name
+                    }));
+                },
+                when: answers => {
+                    const available = getAvailableIntegrations(answers.framework);
+                    return available.length > 0;
+                }
+            },
+            {
                 type: "confirm",
                 name: "installDependencies",
                 message: "¿Querés instalar las dependencias automáticamente?",
@@ -118,7 +144,13 @@ const main = async () => {
             }
         ]);
 
-        const { framework, projectName, installDependencies, initGit } = answers;
+        const {
+            framework,
+            projectName,
+            installDependencies,
+            initGit,
+            selectedIntegrations = []
+        } = answers;
 
         const frameworkNames = {
             astro: "Astro",
@@ -144,6 +176,43 @@ const main = async () => {
         } catch (error) {
             cloneSpinner.fail(chalk.red("❌ Error al copiar la plantilla"));
             throw error;
+        }
+
+        // Copiar integraciones seleccionadas
+        const projectPath = path.resolve(process.cwd(), projectName);
+        const addedIntegrations = [];
+        const allEnvVars = [];
+        const allDependencies = [];
+
+        if (selectedIntegrations.length > 0) {
+            const integrationSpinner = ora({
+                text: `Agregando ${selectedIntegrations.length} integración(es)...`,
+                color: "magenta"
+            }).start();
+
+            try {
+                for (const integrationId of selectedIntegrations) {
+                    const result = await copyIntegration(framework, integrationId, projectPath);
+                    addedIntegrations.push(result.integration);
+                    allEnvVars.push(...result.envVars);
+                    allDependencies.push(...result.dependencies);
+                }
+
+                // Agregar variables de entorno
+                if (allEnvVars.length > 0) {
+                    appendEnvVars(projectPath, allEnvVars);
+                }
+
+                integrationSpinner.succeed(
+                    chalk.green(
+                        `✅ ${addedIntegrations.length} integración(es) agregada(s): ${addedIntegrations.map(i => i.name).join(", ")}`
+                    )
+                );
+            } catch (error) {
+                integrationSpinner.warn(
+                    chalk.yellow(`⚠️ Error al agregar integraciones: ${error.message}`)
+                );
+            }
         }
 
         // Inicializar Git si se solicita
@@ -202,8 +271,28 @@ const main = async () => {
             console.log(chalk.gray("   npm install  # o pnpm install"));
         }
 
+        // Mostrar dependencias adicionales de integraciones
+        if (allDependencies.length > 0) {
+            console.log(
+                chalk.yellow(
+                    `   npm install ${allDependencies.join(" ")}  # dependencias de integraciones`
+                )
+            );
+        }
+
         console.log(chalk.gray("   npm run dev  # o pnpm dev"));
         console.log(chalk.gray("   # ¡Tu proyecto estará disponible en http://localhost:3000!"));
+
+        // Mostrar info de integraciones agregadas
+        if (addedIntegrations.length > 0) {
+            console.log(chalk.cyan.bold("\n🔌 Integraciones agregadas:"));
+            for (const integration of addedIntegrations) {
+                console.log(chalk.gray(`   • ${integration.name} - ${integration.description}`));
+            }
+            console.log(
+                chalk.yellow("\n⚠️ No olvides configurar las variables de entorno en .env.local")
+            );
+        }
 
         console.log(chalk.magenta.bold("\n🚀 ¡Gracias por usar Devanthos! 💜"));
         console.log(chalk.gray("   Documentación: https://docs.devanthos.com"));
@@ -226,7 +315,16 @@ const main = async () => {
 // Función para crear proyecto en modo no-interactivo (CLI flags)
 const createProjectNonInteractive = async (projectName, options) => {
     try {
-        const { template, install = true, git = true, skipUpdateCheck = false } = options;
+        const {
+            template,
+            install = true,
+            git = true,
+            skipUpdateCheck = false,
+            integration
+        } = options;
+
+        // Parsear integraciones si se especificaron
+        const requestedIntegrations = parseIntegrations(integration);
 
         // Validar template
         const validTemplates = ["astro", "next", "expo"];
@@ -277,6 +375,56 @@ const createProjectNonInteractive = async (projectName, options) => {
         } catch (error) {
             cloneSpinner.fail(chalk.red("❌ Error al copiar la plantilla"));
             throw error;
+        }
+
+        // Copiar integraciones si se especificaron
+        const projectPath = path.resolve(process.cwd(), projectName);
+        const addedIntegrations = [];
+        const allEnvVars = [];
+        const allDependencies = [];
+
+        if (requestedIntegrations.length > 0) {
+            // Validar integraciones para el framework
+            const { valid, errors } = validateIntegrations(requestedIntegrations, template);
+
+            // Mostrar errores de integraciones no válidas
+            if (errors.length > 0) {
+                for (const err of errors) {
+                    console.log(chalk.yellow(`  ⚠️ ${err.error}`));
+                }
+            }
+
+            // Copiar integraciones válidas
+            if (valid.length > 0) {
+                const integrationSpinner = ora({
+                    text: `Agregando ${valid.length} integración(es)...`,
+                    color: "magenta"
+                }).start();
+
+                try {
+                    for (const integration of valid) {
+                        const result = await copyIntegration(template, integration.id, projectPath);
+                        addedIntegrations.push(result.integration);
+                        allEnvVars.push(...result.envVars);
+                        allDependencies.push(...result.dependencies);
+                    }
+
+                    // Agregar variables de entorno
+                    if (allEnvVars.length > 0) {
+                        appendEnvVars(projectPath, allEnvVars);
+                    }
+
+                    integrationSpinner.succeed(
+                        chalk.green(
+                            `✅ ${addedIntegrations.length} integración(es) agregada(s): ${addedIntegrations.map(i => i.name).join(", ")}`
+                        )
+                    );
+                } catch (error) {
+                    integrationSpinner.warn(
+                        chalk.yellow(`⚠️ Error al agregar integraciones: ${error.message}`)
+                    );
+                }
+            }
         }
 
         // Inicializar Git si está habilitado
@@ -335,7 +483,27 @@ const createProjectNonInteractive = async (projectName, options) => {
             console.log(chalk.gray("   npm install  # o pnpm install"));
         }
 
+        // Mostrar dependencias adicionales de integraciones
+        if (allDependencies.length > 0) {
+            console.log(
+                chalk.yellow(
+                    `   npm install ${allDependencies.join(" ")}  # dependencias de integraciones`
+                )
+            );
+        }
+
         console.log(chalk.gray("   npm run dev  # o pnpm dev"));
+
+        // Mostrar info de integraciones agregadas
+        if (addedIntegrations.length > 0) {
+            console.log(chalk.cyan.bold("\n🔌 Integraciones agregadas:"));
+            for (const integration of addedIntegrations) {
+                console.log(chalk.gray(`   • ${integration.name} - ${integration.description}`));
+            }
+            console.log(
+                chalk.yellow("\n⚠️ No olvides configurar las variables de entorno en .env.local")
+            );
+        }
 
         console.log(chalk.magenta.bold("\n🚀 ¡Gracias por usar Devanthos! 💜\n"));
 
@@ -364,6 +532,10 @@ program
     .option("--no-git", "No inicializar repositorio Git")
     .option("--skip-update-check", "Saltar verificación de actualizaciones")
     .option("--save-config", "Guardar configuración en devanthos.config.js")
+    .option(
+        "-i, --integration <integrations>",
+        "Integraciones: mercadopago, auth, mongodb (separadas por coma)"
+    )
     .action(async (projectName, options) => {
         // Si no hay argumentos, mostrar wizard interactivo
         if (!projectName && !options.template && !options.preset) {
@@ -431,6 +603,44 @@ program
 
         console.log(chalk.cyan("Uso:"));
         console.log(chalk.gray("  npx create-devanthos-app mi-proyecto -p <preset-id>\n"));
+    });
+
+// Comando para listar integraciones disponibles
+program
+    .command("list-integrations")
+    .alias("list-i")
+    .description("Listar todas las integraciones disponibles")
+    .option("-f, --framework <framework>", "Filtrar por framework: next, astro, expo")
+    .action(options => {
+        console.log(chalk.cyan.bold("\n🔌 Integraciones Disponibles:\n"));
+
+        const integrations = listIntegrations(options.framework);
+
+        if (integrations.length === 0) {
+            console.log(chalk.yellow("  No hay integraciones disponibles para este framework.\n"));
+            return;
+        }
+
+        integrations.forEach(integration => {
+            console.log(chalk.bold(`  ${integration.name}`));
+            console.log(chalk.gray(`  ID: ${integration.id}`));
+            console.log(chalk.gray(`  Frameworks: ${integration.frameworks.join(", ")}`));
+            console.log(chalk.gray(`  Dependencias: ${integration.dependencies.join(", ")}`));
+            console.log(chalk.gray(`  ${integration.description}`));
+            console.log();
+        });
+
+        console.log(chalk.cyan("Uso:"));
+        console.log(chalk.gray("  npx create-devanthos-app mi-proyecto -t next -i mercadopago"));
+        console.log(
+            chalk.gray("  npx create-devanthos-app mi-proyecto -t next -i mercadopago,auth,mongodb")
+        );
+        console.log(chalk.gray("  npx create-devanthos-app mi-proyecto -t next -i mp  # alias\n"));
+
+        console.log(chalk.cyan("Aliases disponibles:"));
+        console.log(chalk.gray("  • mp, mercado, pago → mercadopago"));
+        console.log(chalk.gray("  • auth, login, nextauth → auth"));
+        console.log(chalk.gray("  • mongo, db, database → mongodb\n"));
     });
 
 // Verificar si es llamada directa (no importada)
