@@ -139,7 +139,9 @@ function copyRecursiveSync(src, dest) {
             mkdirSync(dest, { recursive: true });
         }
         readdirSync(src).forEach(childItemName => {
-            copyRecursiveSync(path.join(src, childItemName), path.join(dest, childItemName));
+            // Renombrar 'gitignore' a '.gitignore' (npm ignora archivos .gitignore)
+            const destName = childItemName === "gitignore" ? ".gitignore" : childItemName;
+            copyRecursiveSync(path.join(src, childItemName), path.join(dest, destName));
         });
     } else {
         copyFileSync(src, dest);
