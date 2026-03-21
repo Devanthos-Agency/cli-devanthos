@@ -7,6 +7,85 @@ y este proyecto se adhiere al [Versionado Semántico](https://semver.org/lang/es
 
 ---
 
+## [2.2.0] - 2026-03-20
+
+### 🏗️ REESTRUCTURACIÓN ESM + TESTING + REFACTOR
+
+**✅ Migración a estructura `src/` según mejores prácticas ESM**  
+**✅ Suite de tests con Vitest (44 tests)**  
+**✅ Eliminación de código duplicado con módulo `create-project.js`**  
+**✅ Node.js >=20 (LTS mantenido actualmente)**
+
+### 🚀 Cambios Principales
+
+#### Estructura `src/`
+
+- 📁 **Código fuente reorganizado** en `src/` siguiendo la convención estándar de paquetes npm
+    - `src/index.js` — CLI principal (antes `index.js`)
+    - `src/utils/*.js` — Módulos utilitarios (antes `utils/*.js`)
+    - Mejor separación entre código fuente, tests y templates
+
+#### Nuevos Módulos
+
+- 🆕 **`src/utils/create-project.js`** — Lógica centralizada de creación de proyectos
+    - Elimina ~150 líneas de código duplicado entre modo interactivo y no-interactivo
+    - Función única `createProject()` compartida por ambos modos
+    - Maneja clonado, integraciones, Git init, instalación de deps y mensajes de éxito
+
+- 🆕 **`src/utils/paths.js`** — Resolución centralizada de `CLI_ROOT`
+    - Elimina cómputo repetido de `__filename` / `__dirname` en `clone.js` e `integrations.js`
+    - Función `findCliRoot()` que busca hacia arriba hasta encontrar la raíz del CLI
+
+### ✨ Agregado
+
+#### Testing con Vitest
+
+- 🧪 **44 tests unitarios** con Vitest
+    - `tests/config.test.js` — 14 tests: presets, configuración, merge, validación
+    - `tests/integrations.test.js` — 20 tests: aliases, parseo, validación, listado
+    - `tests/validate.test.js` — 7 tests: validación de nombres de proyecto
+    - `tests/clone.test.js` — 3 tests: templates disponibles y estructura
+- 📄 **`vitest.config.js`** — Configuración del test runner (excluye templates y .agents)
+
+#### Configuración ESM Moderna
+
+- 📄 **`tsconfig.json`** — Verificación de tipos para JavaScript con `checkJs: true`
+    - `target: ES2022`, `module: ESNext`, `moduleResolution: NodeNext`
+- 📦 **`package.json`** actualizado
+    - Campo `exports` con configuración moderna
+    - Campo `main` apuntando a `./src/index.js`
+    - `engines.node` actualizado de `>=16.0.0` a `>=20`
+    - Script `prepublishOnly` ahora ejecuta tests antes de publicar
+
+### 🔄 Cambiado
+
+- **`package.json`**
+    - `bin` → `./src/index.js`
+    - `files` → `["src/", "templates/", "README.md"]`
+    - `scripts.test` → `vitest` (antes `node index.js`)
+    - `scripts.dev` → `node src/index.js`
+    - `scripts.lint` → `eslint src/`
+    - `scripts.prepublishOnly` → `npm run test:run && npm run lint`
+
+- **`src/index.js`** — Simplificado
+    - Eliminados imports no utilizados: `ora`, `path`, `cloneTemplate`, `installDeps`, `initGitRepo`, `copyIntegration`, `appendEnvVars`
+    - `main()` ahora delega a `createProject()` en lugar de duplicar toda la lógica
+    - `createProjectNonInteractive()` igualmente refactorizado
+    - Ruta de `package.json` actualizada: `../package.json` (relativo a `src/`)
+
+- **`src/utils/clone.js`** — Usa `CLI_ROOT` centralizado de `paths.js`
+- **`src/utils/integrations.js`** — Usa `CLI_ROOT` centralizado de `paths.js`
+- **`src/utils/update.js`** — Ruta de `package.json` actualizada: `../../package.json`
+
+### 📊 Estadísticas
+
+- **Archivos nuevos:** 5 (`create-project.js`, `paths.js`, `vitest.config.js`, `tsconfig.json`, 4 test files)
+- **Código duplicado eliminado:** ~150 líneas
+- **Tests:** 44 (100% passing)
+- **Node.js mínimo:** 20 (antes 16)
+
+---
+
 ## [2.0.0] - 2025-12-10
 
 ### 🎉 ARQUITECTURA v2.0 - PLANTILLAS LOCALES Y SISTEMA DE EXTRAS

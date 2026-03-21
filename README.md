@@ -4,7 +4,7 @@
 
 ![Devanthos CLI](https://img.shields.io/badge/Devanthos-CLI-magenta?style=for-the-badge)
 ![npm version](https://img.shields.io/npm/v/create-devanthos-app?style=for-the-badge&color=green)
-![Node.js](https://img.shields.io/badge/Node.js-16+-339933?style=for-the-badge&logo=node.js)
+![Node.js](https://img.shields.io/badge/Node.js-20+-339933?style=for-the-badge&logo=node.js)
 ![License](https://img.shields.io/badge/License-MIT-blue?style=for-the-badge)
 
 **CLI oficial de Devanthos para crear proyectos modernos con Astro, Next.js y Expo**
@@ -383,7 +383,7 @@ npx create-devanthos-app@latest
 
 ---
 
-## �🛠️ Desarrollo y contribución
+## 🛠️ Desarrollo y contribución
 
 ### Clonar el repositorio
 
@@ -396,21 +396,46 @@ npm install
 ### Probar localmente
 
 ```bash
+# Ejecutar el CLI en modo desarrollo
 npm run dev
-# o
-npm test
+
+# Ejecutar tests
+npm test          # modo watch
+npm run test:run  # una sola ejecución
+
+# Lint y formato
+npm run lint
+npm run format
 ```
 
 ### Estructura del proyecto
 
 ```
 create-devanthos-app/
-├── index.js           # CLI principal
-├── utils/
-│   ├── clone.js       # Lógica de clonado
-│   └── install.js     # Instalación de dependencias
-├── package.json       # Configuración del paquete
-└── README.md         # Esta documentación
+├── src/
+│   ├── index.js              # CLI principal (punto de entrada)
+│   └── utils/
+│       ├── clone.js           # Copia de plantillas locales
+│       ├── config.js          # Presets y configuración
+│       ├── create-project.js  # Lógica centralizada de creación
+│       ├── git.js             # Inicialización de Git
+│       ├── install.js         # Instalación de dependencias
+│       ├── integrations.js    # Sistema de integraciones
+│       ├── paths.js           # Resolución de rutas del CLI
+│       └── update.js          # Chequeo de actualizaciones
+├── templates/
+│   ├── astro-template-devanthos/
+│   ├── next-template-devanthos/
+│   └── expo-template-devanthos/
+├── tests/
+│   ├── clone.test.js
+│   ├── config.test.js
+│   ├── integrations.test.js
+│   └── validate.test.js
+├── package.json
+├── vitest.config.js
+├── tsconfig.json
+└── README.md
 ```
 
 ### Contribuir
