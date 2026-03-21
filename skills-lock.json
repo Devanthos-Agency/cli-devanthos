@@ -1,0 +1,10 @@
+{
+  "version": 1,
+  "skills": {
+    "npm-library-setup": {
+      "source": "huozhi/npm-skills",
+      "sourceType": "github",
+      "computedHash": "f4b72b307473b11b03521cb2ddaf6bacff4e9f151575295eaa4bb87a288a0b1e"
+    }
+  }
+}
