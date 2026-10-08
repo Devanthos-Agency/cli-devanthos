@@ -86,7 +86,7 @@ const main = async () => {
 
         const answers = await inquirer.prompt([
             {
-                type: "list",
+                type: "select",
                 name: "framework",
                 message: "¿Qué tipo de proyecto querés crear?",
                 choices: [

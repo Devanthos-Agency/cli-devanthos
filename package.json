@@ -57,16 +57,16 @@
         "node": ">=20"
     },
     "dependencies": {
-        "chalk": "^5.3.0",
-        "commander": "^14.0.1",
-        "inquirer": "^9.2.12",
-        "ora": "^7.0.1"
+        "chalk": "^6.0.1",
+        "commander": "^15.0.0",
+        "inquirer": "^14.2.3",
+        "ora": "^9.4.1"
     },
     "devDependencies": {
-        "@types/node": "^25.5.0",
+        "@types/node": "^26.6.4",
         "eslint": "^8.57.0",
-        "prettier": "^3.1.1",
-        "vitest": "^3.1.1"
+        "prettier": "^3.9.9",
+        "vitest": "^5.0.3"
     },
     "scripts": {
         "test": "vitest",

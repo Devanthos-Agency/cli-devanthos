@@ -1,6 +1,7 @@
 ---
 title: 'Markdown + Tailwind'
-layout: ../layouts/main.astro
+layout: ../layouts/Layout.astro
+description: 'Ejemplo de página Markdown con Tailwind'
 ---
 
 <div class="grid place-items-center h-screen content-center">

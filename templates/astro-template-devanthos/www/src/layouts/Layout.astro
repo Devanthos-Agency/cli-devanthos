@@ -15,9 +15,10 @@ interface Props {
     preload?: Array<Preload>;
     canonical?: string;
     image?: string;
+    frontmatter?: Props;
 }
 
-const { title, description, preload, canonical, image } = Astro.props;
+const { title, description, preload, canonical, image } = Astro.props.frontmatter ?? Astro.props;
 import '@/styles/global.css';
 import Footer from '@/components/interfaces/Footer.astro';
 import Header from '@/components/interfaces/Header.astro';

@@ -5,7 +5,7 @@ import { Text } from '../ui/text';
 import { Icon } from '../ui/icon';
 import { ArrowRight, Code2, Rocket } from 'lucide-react-native';
 import { SvgUri } from 'react-native-svg';
-import { useColorScheme } from 'nativewind';
+import { useUniwind } from 'uniwind';
 import { cn } from '@/lib/utils';
 
 type LogoConfig = {
@@ -92,7 +92,7 @@ function LogoBubble({ uri, position, scale = 1, fill }: LogoBubbleProps) {
 }
 
 export default function Hero() {
-    const { colorScheme } = useColorScheme();
+    const { theme: colorScheme } = useUniwind();
     const logoFill = colorScheme === 'dark' ? '#f1f5f9' : '#0f172a';
 
     return (

@@ -4,7 +4,7 @@ import { THEME } from '@/lib/theme';
 import Hero from '@/components/interfaces/hero';
 import { Stack } from 'expo-router';
 import { MoonStarIcon, SunIcon } from 'lucide-react-native';
-import { useColorScheme } from 'nativewind';
+import { Uniwind, useUniwind } from 'uniwind';
 import * as React from 'react';
 import { ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -27,7 +27,7 @@ const SCREEN_OPTIONS = {
 };
 
 export default function Screen() {
-    const { colorScheme } = useColorScheme();
+    const { theme: colorScheme } = useUniwind();
 
     return (
         <>
@@ -50,7 +50,8 @@ const THEME_ICONS = {
 };
 
 function ThemeToggle() {
-    const { colorScheme, toggleColorScheme } = useColorScheme();
+    const { theme: colorScheme } = useUniwind();
+    const toggleColorScheme = () => Uniwind.setTheme(colorScheme === 'dark' ? 'light' : 'dark');
 
     return (
         <Button
